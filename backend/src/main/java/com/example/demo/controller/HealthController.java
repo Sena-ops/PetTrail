@@ -1,68 +1,31 @@
 package com.example.demo.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/health")
-@Tag(name = "Health Check", description = "Endpoints para verificação de saúde da aplicação")
+@RequestMapping("/actuator")
 public class HealthController {
 
-    @GetMapping
-    @Operation(
-        summary = "Verificar status da aplicação",
-        description = "Retorna informações sobre o status atual da aplicação PatTrail"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Aplicação funcionando normalmente",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = Map.class)
-            )
-        )
-    })
-    public ResponseEntity<Map<String, Object>> healthCheck() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "UP");
-        response.put("application", "PatTrail");
-        response.put("version", "1.0.0");
-        response.put("timestamp", LocalDateTime.now());
-        response.put("message", "Aplicação funcionando normalmente");
-        
-        return ResponseEntity.ok(response);
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> health() {
+        Map<String, Object> health = new HashMap<>();
+        health.put("status", "UP");
+        health.put("timestamp", System.currentTimeMillis());
+        return ResponseEntity.ok(health);
     }
 
-    @GetMapping("/ping")
-    @Operation(
-        summary = "Ping simples",
-        description = "Endpoint simples para verificar se a aplicação está respondendo"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Pong retornado com sucesso",
-            content = @Content(
-                mediaType = "text/plain",
-                schema = @Schema(implementation = String.class),
-                examples = @io.swagger.v3.oas.annotations.media.ExampleObject(value = "pong")
-            )
-        )
-    })
-    public ResponseEntity<String> ping() {
-        return ResponseEntity.ok("pong");
+    @GetMapping("/info")
+    public ResponseEntity<Map<String, Object>> info() {
+        Map<String, Object> info = new HashMap<>();
+        info.put("name", "PatTrail API");
+        info.put("version", "1.0.0");
+        info.put("description", "API para rastrear passeios do seu pet e conquistar badges");
+        return ResponseEntity.ok(info);
     }
 }

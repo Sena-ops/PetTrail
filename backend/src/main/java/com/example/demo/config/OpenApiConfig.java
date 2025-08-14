@@ -17,8 +17,8 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("PatTrail API")
-                        .description("API para rastrear passeios do seu pet e conquistar badges")
+                        .title("Pets API (MVP)")
+                        .description("A minimal REST API for creating and listing pets with validation. Duplicate pet names are permitted in this MVP.")
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("PatTrail Team")
@@ -30,10 +30,10 @@ public class OpenApiConfig {
                 .servers(List.of(
                         new Server()
                                 .url("http://localhost:8080")
-                                .description("Servidor de Desenvolvimento"),
+                                .description("Development Server"),
                         new Server()
                                 .url("https://api.pattrail.com")
-                                .description("Servidor de Produção")
+                                .description("Production Server")
                 ));
     }
 }

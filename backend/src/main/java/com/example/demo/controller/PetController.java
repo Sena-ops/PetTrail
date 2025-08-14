@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.CriarPetRequest;
+import com.example.demo.dto.AtualizarPetRequest;
+import com.example.demo.dto.ErrorResponse;
 import com.example.demo.model.Pet;
 import com.example.demo.repository.PetRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,7 +24,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/pets")
-@Tag(name = "Pets", description = "API para gerenciamento de pets")
+@Tag(name = "Pets", description = "API for pet management")
 public class PetController {
 
     @Autowired
@@ -30,33 +32,33 @@ public class PetController {
 
     @GetMapping
     @Operation(
-        summary = "Listar todos os pets",
-        description = "Retorna uma lista com todos os pets cadastrados no sistema"
+        summary = "List all pets",
+        description = "Returns a list of all pets with id, name, species, age, and race"
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Lista de pets retornada com sucesso",
+            description = "List of pets returned successfully",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = Pet.class)
             )
         )
     })
-    public ResponseEntity<List<Pet>> listarPets() {
+    public ResponseEntity<List<Pet>> listPets() {
         List<Pet> pets = petRepository.findAll();
         return ResponseEntity.ok(pets);
     }
 
     @GetMapping("/{id}")
     @Operation(
-        summary = "Buscar pet por ID",
-        description = "Retorna um pet específico baseado no ID fornecido"
+        summary = "Get pet by ID",
+        description = "Returns a specific pet by its ID"
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Pet encontrado com sucesso",
+            description = "Pet found successfully",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = Pet.class)
@@ -64,32 +66,34 @@ public class PetController {
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Pet não encontrado",
+            description = "Pet not found",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = String.class),
-                examples = @ExampleObject(value = "\"Pet não encontrado\"")
+                schema = @Schema(implementation = ErrorResponse.class)
             )
         )
     })
-    public ResponseEntity<Pet> buscarPetPorId(
-        @Parameter(description = "ID do pet", example = "1", required = true)
+    public ResponseEntity<Pet> getPetById(
+        @Parameter(description = "ID of the pet to retrieve", required = true)
         @PathVariable Long id
     ) {
         Optional<Pet> pet = petRepository.findById(id);
-        return pet.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        if (pet.isPresent()) {
+            return ResponseEntity.ok(pet.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping
     @Operation(
-        summary = "Criar novo pet",
-        description = "Cria um novo pet no sistema com os dados fornecidos"
+        summary = "Create a new pet",
+        description = "Creates a new pet with required fields: name (1-60 characters), species (CACHORRO or GATO), age (0-30), and race (1-50 characters). Duplicate pet names are permitted in this MVP."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "201",
-            description = "Pet criado com sucesso",
+            description = "Pet created successfully",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = Pet.class)
@@ -97,32 +101,43 @@ public class PetController {
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Dados inválidos fornecidos",
+            description = "Validation error",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = String.class),
-                examples = @ExampleObject(value = "\"Dados inválidos\"")
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(
+                    name = "Validation Error Example",
+                    value = """
+                    {
+                      "code": "VALIDATION_ERROR",
+                      "message": "One or more validation errors occurred.",
+                      "details": [
+                        { "field": "name", "issue": "must not be blank" }
+                      ]
+                    }
+                    """
+                )
             )
         )
     })
-    public ResponseEntity<Pet> criarPet(
-        @Parameter(description = "Dados do pet a ser criado", required = true)
+    public ResponseEntity<Pet> createPet(
+        @Parameter(description = "Pet data to create", required = true)
         @Valid @RequestBody CriarPetRequest request
     ) {
-        Pet pet = new Pet(request.getNome(), request.getEspecie(), request.getRaca(), request.getIdade());
-        Pet petSalvo = petRepository.save(pet);
-        return ResponseEntity.status(HttpStatus.CREATED).body(petSalvo);
+        Pet pet = new Pet(request.getName(), request.getSpecies(), request.getAge(), request.getRace());
+        Pet savedPet = petRepository.save(pet);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedPet);
     }
 
     @PutMapping("/{id}")
     @Operation(
-        summary = "Atualizar pet",
-        description = "Atualiza os dados de um pet existente"
+        summary = "Update a pet",
+        description = "Updates an existing pet's name, species, age, or race. All fields are optional - only provided fields will be updated."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Pet atualizado com sucesso",
+            description = "Pet updated successfully",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = Pet.class)
@@ -130,107 +145,80 @@ public class PetController {
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Pet não encontrado",
+            description = "Pet not found",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = String.class),
-                examples = @ExampleObject(value = "\"Pet não encontrado\"")
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Validation error",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ErrorResponse.class)
             )
         )
     })
-    public ResponseEntity<Pet> atualizarPet(
-        @Parameter(description = "ID do pet", example = "1", required = true)
+    public ResponseEntity<Pet> updatePet(
+        @Parameter(description = "ID of the pet to update", required = true)
         @PathVariable Long id,
-        @Parameter(description = "Novos dados do pet", required = true)
-        @Valid @RequestBody CriarPetRequest request
+        @Parameter(description = "Pet data to update", required = true)
+        @Valid @RequestBody AtualizarPetRequest request
     ) {
-        Optional<Pet> petExistente = petRepository.findById(id);
-        if (petExistente.isPresent()) {
-            Pet pet = petExistente.get();
-            pet.setNome(request.getNome());
-            pet.setEspecie(request.getEspecie());
-            pet.setRaca(request.getRaca());
-            pet.setIdade(request.getIdade());
-            Pet petAtualizado = petRepository.save(pet);
-            return ResponseEntity.ok(petAtualizado);
+        Optional<Pet> existingPet = petRepository.findById(id);
+        if (existingPet.isPresent()) {
+            Pet pet = existingPet.get();
+            
+            if (request.getName() != null) {
+                pet.setName(request.getName());
+            }
+            if (request.getSpecies() != null) {
+                pet.setSpecies(request.getSpecies());
+            }
+            if (request.getAge() != null) {
+                pet.setAge(request.getAge());
+            }
+            if (request.getRace() != null) {
+                pet.setRace(request.getRace());
+            }
+            
+            Pet updatedPet = petRepository.save(pet);
+            return ResponseEntity.ok(updatedPet);
+        } else {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     @Operation(
-        summary = "Excluir pet",
-        description = "Remove um pet do sistema"
+        summary = "Delete a pet",
+        description = "Deletes a pet by its ID"
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "204",
-            description = "Pet excluído com sucesso"
+            description = "Pet deleted successfully"
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Pet não encontrado",
+            description = "Pet not found",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = String.class),
-                examples = @ExampleObject(value = "\"Pet não encontrado\"")
+                schema = @Schema(implementation = ErrorResponse.class)
             )
         )
     })
-    public ResponseEntity<Void> excluirPet(
-        @Parameter(description = "ID do pet", example = "1", required = true)
+    public ResponseEntity<Void> deletePet(
+        @Parameter(description = "ID of the pet to delete", required = true)
         @PathVariable Long id
     ) {
-        if (petRepository.existsById(id)) {
+        Optional<Pet> pet = petRepository.findById(id);
+        if (pet.isPresent()) {
             petRepository.deleteById(id);
             return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
-    }
-
-    @GetMapping("/especie/{especie}")
-    @Operation(
-        summary = "Buscar pets por espécie",
-        description = "Retorna todos os pets de uma determinada espécie"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Lista de pets da espécie retornada com sucesso",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = Pet.class)
-            )
-        )
-    })
-    public ResponseEntity<List<Pet>> buscarPorEspecie(
-        @Parameter(description = "Espécie dos pets", example = "Cachorro", required = true)
-        @PathVariable String especie
-    ) {
-        List<Pet> pets = petRepository.findByEspecie(especie);
-        return ResponseEntity.ok(pets);
-    }
-
-    @GetMapping("/busca")
-    @Operation(
-        summary = "Buscar pets por nome",
-        description = "Busca pets cujo nome contenha o termo fornecido (case insensitive)"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Lista de pets encontrados com sucesso",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = Pet.class)
-            )
-        )
-    })
-    public ResponseEntity<List<Pet>> buscarPorNome(
-        @Parameter(description = "Termo para busca no nome", example = "Rex", required = true)
-        @RequestParam String nome
-    ) {
-        List<Pet> pets = petRepository.findByNomeContainingIgnoreCase(nome);
-        return ResponseEntity.ok(pets);
     }
 }

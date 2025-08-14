@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pets API (MVP) - Documentation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #666;
+            margin-top: 25px;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .get { background: #28a745; color: white; }
+        .post { background: #007bff; color: white; }
+        .url {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: block;
+        }
+        .example {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .example pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .response {
+            background: #e8f5e8;
+            border: 1px solid #28a745;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .validation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .validation-table th, .validation-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .validation-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        .status-code {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .status-200 { background: #28a745; color: white; }
+        .status-201 { background: #17a2b8; color: white; }
+        .status-400 { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐾 Pets API (MVP) - Documentation</h1>
+        
+        <div class="note">
+            <strong>Note:</strong> This is a minimal viable product (MVP) API for creating and listing pets. 
+            Duplicate pet names are permitted in this MVP as explicitly documented.
+        </div>
+
+        <h2>Base URL</h2>
+        <div class="url">http://localhost:8080</div>
+
+        <h2>Authentication</h2>
+        <p>No authentication is required for this MVP.</p>
+
+        <h2>Content Type</h2>
+        <p>All requests and responses use <code>application/json</code> content type.</p>
+
+        <h2>Endpoints</h2>
+
+        <div class="endpoint">
+            <h3><span class="method get">GET</span> List All Pets</h3>
+            <div class="url">GET /api/pets</div>
+            <p>Returns a list of all pets with their id, name, and species.</p>
+            
+            <h4>Response</h4>
+            <div class="response">
+                <div class="status-code status-200">200 OK</div>
+                <pre>[
+  {
+    "id": 1,
+    "name": "Rex",
+    "species": "CACHORRO",
+    "createdAt": "2025-08-13T20:28:37.517"
+  },
+  {
+    "id": 2,
+    "name": "Mimi",
+    "species": "GATO",
+    "createdAt": "2025-08-13T20:29:04.231"
+  }
+]</pre>
+            </div>
+        </div>
+
+        <div class="endpoint">
+            <h3><span class="method post">POST</span> Create Pet</h3>
+            <div class="url">POST /api/pets</div>
+            <p>Creates a new pet with the provided name and species.</p>
+            
+            <h4>Request Body</h4>
+            <div class="example">
+                <pre>{
+  "name": "Rex",
+  "species": "CACHORRO"
+}</pre>
+            </div>
+
+            <h4>Validation Rules</h4>
+            <table class="validation-table">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Required</th>
+                        <th>Constraints</th>
+                        <th>Allowed Values</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>name</td>
+                        <td>string</td>
+                        <td>Yes</td>
+                        <td>1-60 characters, not blank</td>
+                        <td>Any string</td>
+                    </tr>
+                    <tr>
+                        <td>species</td>
+                        <td>string</td>
+                        <td>Yes</td>
+                        <td>Must be one of the allowed values</td>
+                        <td>CACHORRO, GATO</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Success Response</h4>
+            <div class="response">
+                <div class="status-code status-201">201 Created</div>
+                <pre>{
+  "id": 1,
+  "name": "Rex",
+  "species": "CACHORRO",
+  "createdAt": "2025-08-13T20:28:37.517"
+}</pre>
+            </div>
+
+            <h4>Error Response</h4>
+            <div class="error">
+                <div class="status-code status-400">400 Bad Request</div>
+                <pre>{
+  "code": "VALIDATION_ERROR",
+  "message": "One or more validation errors occurred.",
+  "details": [
+    {
+      "field": "name",
+      "issue": "must not be blank"
+    }
+  ]
+}</pre>
+            </div>
+        </div>
+
+        <h2>Error Response Format</h2>
+        <p>All validation errors follow this standard JSON format:</p>
+        <div class="example">
+            <pre>{
+  "code": "VALIDATION_ERROR",
+  "message": "One or more validation errors occurred.",
+  "details": [
+    {
+      "field": "field_name",
+      "issue": "description of the validation issue"
+    }
+  ]
+}</pre>
+        </div>
+
+        <h2>Examples</h2>
+
+        <h3>Valid Pet Creation</h3>
+        <div class="example">
+            <strong>Request:</strong>
+            <pre>curl -i -X POST http://localhost:8080/api/pets \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Rex", "species": "CACHORRO" }'</pre>
+        </div>
+
+        <h3>Another Valid Pet Creation</h3>
+        <div class="example">
+            <strong>Request:</strong>
+            <pre>curl -i -X POST http://localhost:8080/api/pets \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Mimi", "species": "GATO" }'</pre>
+        </div>
+
+        <h3>Invalid Species (Error Example)</h3>
+        <div class="example">
+            <strong>Request:</strong>
+            <pre>curl -i -X POST http://localhost:8080/api/pets \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Piu", "species": "PASSARO" }'</pre>
+        </div>
+
+        <h3>List All Pets</h3>
+        <div class="example">
+            <strong>Request:</strong>
+            <pre>curl -i -X GET http://localhost:8080/api/pets</pre>
+        </div>
+
+        <h2>Testing</h2>
+        <p>The API has been tested and verified to work with the following scenarios:</p>
+        <ul>
+            <li>✅ Valid pet creation returns 201</li>
+            <li>✅ List pets returns 200 with data</li>
+            <li>✅ Blank name returns 400 with error details</li>
+            <li>✅ Invalid species returns 400 with error details</li>
+            <li>✅ Duplicate names are permitted</li>
+        </ul>
+
+        <h2>Notes</h2>
+        <div class="note">
+            <ul>
+                <li><strong>Duplicate Names:</strong> Multiple pets with the same name can be created in this MVP.</li>
+                <li><strong>Database:</strong> Uses SQLite with automatic schema creation.</li>
+                <li><strong>Validation:</strong> Server-side validation with detailed error messages.</li>
+                <li><strong>Content Type:</strong> All requests and responses use application/json.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

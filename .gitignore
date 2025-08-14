@@ -23,3 +23,17 @@
 hs_err_pid*
 replay_pid*
 /.idea
+
+# Build/output
+target/
+
+# Bancos locais (SQLite/H2) e locks
+backend/data/
+*.db
+*.db-shm
+*.db-wal
+*.mv.db
+*.trace.db
+
+# Logs
+*.log
