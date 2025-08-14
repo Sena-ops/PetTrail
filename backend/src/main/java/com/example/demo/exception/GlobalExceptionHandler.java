@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +49,44 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
                 "VALIDATION_ERROR",
                 "One or more validation errors occurred.",
+                List.of(validationError)
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(PetNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePetNotFoundException(PetNotFoundException ex) {
+        ValidationError validationError = new ValidationError("petId", "unknown");
+        ErrorResponse errorResponse = new ErrorResponse(
+                "NOT_FOUND",
+                "pet not found",
+                List.of(validationError)
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(ActiveWalkExistsException.class)
+    public ResponseEntity<ErrorResponse> handleActiveWalkExistsException(ActiveWalkExistsException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "CONFLICT",
+                ex.getMessage(),
+                List.of()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        String field = ex.getName();
+        String issue = "required numeric id";
+        
+        ValidationError validationError = new ValidationError(field, issue);
+        ErrorResponse errorResponse = new ErrorResponse(
+                "VALIDATION_ERROR",
+                "Invalid query parameter.",
                 List.of(validationError)
         );
 
