@@ -1,7 +1,11 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.StartWalkResponse;
+import com.example.demo.dto.WalkPointRequest;
+import com.example.demo.dto.WalkPointsBatchResponse;
 import com.example.demo.service.WalkService;
+import com.example.demo.service.WalkPointsService;
+import com.example.demo.validation.ValidWalkPointsArray;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,16 +18,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/walks")
 @Tag(name = "Walks", description = "Walk management endpoints")
 public class WalkController {
 
     private final WalkService walkService;
+    private final WalkPointsService walkPointsService;
 
     @Autowired
-    public WalkController(WalkService walkService) {
+    public WalkController(WalkService walkService, WalkPointsService walkPointsService) {
         this.walkService = walkService;
+        this.walkPointsService = walkPointsService;
     }
 
     @PostMapping("/start")
@@ -87,5 +96,73 @@ public class WalkController {
         
         StartWalkResponse response = walkService.startWalk(petId);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/points")
+    @Operation(
+        summary = "Upload walk points in batch",
+        description = "Upload GPS points for a walk. Points are validated, sorted by timestamp, and outliers (speed > 50 m/s) are discarded. Coordinates must be WGS84 lat/lon in degrees for OpenStreetMap compatibility."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "202",
+            description = "Points processed successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = WalkPointsBatchResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"received\": 2, \"accepted\": 2, \"discarded\": 0}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid payload (empty array, too many points, or validation errors)",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = com.example.demo.dto.ErrorResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"code\": \"BAD_REQUEST\", \"message\": \"Payload must have 1..5000 points.\", \"details\": []}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Walk not found",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = com.example.demo.dto.ErrorResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"code\": \"NOT_FOUND\", \"message\": \"walk not found\", \"details\": []}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Walk already finished",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = com.example.demo.dto.ErrorResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"code\": \"CONFLICT\", \"message\": \"walk already finished\", \"details\": []}"
+                )
+            )
+        )
+    })
+    public ResponseEntity<WalkPointsBatchResponse> uploadWalkPoints(
+            @Parameter(
+                description = "ID of the walk to upload points for",
+                required = true,
+                example = "123"
+            )
+            @PathVariable("id") Long walkId,
+            @Parameter(
+                description = "Array of GPS points (1-5000 points). Coordinates must be WGS84 lat/lon in degrees.",
+                required = true
+            )
+            @Valid @ValidWalkPointsArray @RequestBody List<WalkPointRequest> points) {
+        
+        WalkPointsBatchResponse response = walkPointsService.ingestPoints(walkId, points);
+        return ResponseEntity.accepted().body(response);
     }
 }

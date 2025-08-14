@@ -2,6 +2,7 @@ package com.example.demo.exception;
 
 import com.example.demo.dto.ErrorResponse;
 import com.example.demo.dto.ValidationError;
+import com.example.demo.validation.ValidWalkPointsArray;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import jakarta.validation.ConstraintViolationException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -76,6 +78,39 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(WalkNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleWalkNotFoundException(WalkNotFoundException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "NOT_FOUND",
+                "walk not found",
+                List.of()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(WalkFinishedException.class)
+    public ResponseEntity<ErrorResponse> handleWalkFinishedException(WalkFinishedException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "CONFLICT",
+                ex.getMessage(),
+                List.of()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "BAD_REQUEST",
+                "Payload must have 1..5000 points.",
+                List.of()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
