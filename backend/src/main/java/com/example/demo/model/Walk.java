@@ -30,6 +30,18 @@ public class Walk {
     @Schema(description = "When the walk finished (null if still active)", example = "2025-08-14T23:15:30Z")
     private LocalDateTime finishedAt;
 
+    @Column(name = "distancia_m")
+    @Schema(description = "Total distance in meters", example = "2450.7")
+    private Double distanciaM;
+
+    @Column(name = "duracao_s")
+    @Schema(description = "Duration in seconds", example = "1560")
+    private Integer duracaoS;
+
+    @Column(name = "vel_media_kmh")
+    @Schema(description = "Average speed in km/h", example = "5.65")
+    private Double velMediaKmh;
+
     // Constructors
     public Walk() {}
 
@@ -37,12 +49,18 @@ public class Walk {
         this.petId = petId;
         this.startedAt = startedAt;
         this.finishedAt = null;
+        this.distanciaM = null;
+        this.duracaoS = null;
+        this.velMediaKmh = null;
     }
 
     public Walk(Long petId, LocalDateTime startedAt, LocalDateTime finishedAt) {
         this.petId = petId;
         this.startedAt = startedAt;
         this.finishedAt = finishedAt;
+        this.distanciaM = null;
+        this.duracaoS = null;
+        this.velMediaKmh = null;
     }
 
     // Getters and Setters
@@ -76,6 +94,30 @@ public class Walk {
 
     public void setFinishedAt(LocalDateTime finishedAt) {
         this.finishedAt = finishedAt;
+    }
+
+    public Double getDistanciaM() {
+        return distanciaM;
+    }
+
+    public void setDistanciaM(Double distanciaM) {
+        this.distanciaM = distanciaM;
+    }
+
+    public Integer getDuracaoS() {
+        return duracaoS;
+    }
+
+    public void setDuracaoS(Integer duracaoS) {
+        this.duracaoS = duracaoS;
+    }
+
+    public Double getVelMediaKmh() {
+        return velMediaKmh;
+    }
+
+    public void setVelMediaKmh(Double velMediaKmh) {
+        this.velMediaKmh = velMediaKmh;
     }
 
     public boolean isActive() {

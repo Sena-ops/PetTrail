@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.StartWalkResponse;
+import com.example.demo.dto.StopWalkResponse;
 import com.example.demo.dto.WalkPointRequest;
 import com.example.demo.dto.WalkPointsBatchResponse;
 import com.example.demo.service.WalkService;
@@ -164,5 +165,57 @@ public class WalkController {
         
         WalkPointsBatchResponse response = walkPointsService.ingestPoints(walkId, points);
         return ResponseEntity.accepted().body(response);
+    }
+
+    @PostMapping("/{id}/stop")
+    @Operation(
+        summary = "Stop a walk and compute consolidated metrics",
+        description = "Stop an active walk, compute distance, duration, and average speed using WGS84 coordinates (OpenStreetMap compatible), and persist the metrics. Idempotent: subsequent calls return 409 if already finished."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Walk stopped successfully with consolidated metrics",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = StopWalkResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"walkId\": 123, \"distanciaM\": 2450.7, \"duracaoS\": 1560, \"velMediaKmh\": 5.65, \"startedAt\": \"2025-08-13T23:15:00Z\", \"finishedAt\": \"2025-08-13T23:41:00Z\"}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Walk not found",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = com.example.demo.dto.ErrorResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"code\": \"NOT_FOUND\", \"message\": \"walk not found\", \"details\": [{\"field\": \"id\", \"issue\": \"unknown\"}]}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Walk already finished",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = com.example.demo.dto.ErrorResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"code\": \"CONFLICT\", \"message\": \"walk already finished\", \"details\": []}"
+                )
+            )
+        )
+    })
+    public ResponseEntity<StopWalkResponse> stopWalk(
+            @Parameter(
+                description = "ID of the walk to stop",
+                required = true,
+                example = "123"
+            )
+            @PathVariable("id") Long walkId) {
+        
+        StopWalkResponse response = walkService.stopWalk(walkId);
+        return ResponseEntity.ok(response);
     }
 }
