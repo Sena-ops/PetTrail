@@ -4,6 +4,8 @@ import com.example.pettrail.dto.StartWalkResponse;
 import com.example.pettrail.dto.StopWalkResponse;
 import com.example.pettrail.dto.WalkPointRequest;
 import com.example.pettrail.dto.WalkPointsBatchResponse;
+import com.example.pettrail.dto.WalksPageResponse;
+import com.example.pettrail.exception.PaginationValidationException;
 import com.example.pettrail.service.WalkService;
 import com.example.pettrail.service.WalkPointsService;
 import com.example.pettrail.validation.ValidWalkPointsArray;
@@ -260,6 +262,90 @@ public class WalkController {
             @PathVariable("id") Long walkId) {
         
         StopWalkResponse response = walkService.stopWalk(walkId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    @Operation(
+        summary = "List walks by pet with pagination",
+        description = "Get a paginated list of walks for a specific pet, ordered by start time descending. Returns walks with their metrics (distance, duration, average speed)."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Walks retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = WalksPageResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"content\": [{\"id\": 101, \"startedAt\": \"2025-08-13T23:15:00Z\", \"finishedAt\": \"2025-08-13T23:41:00Z\", \"distanciaM\": 2450.7, \"duracaoS\": 1560, \"velMediaKmh\": 5.65}], \"page\": 0, \"size\": 10, \"totalPages\": 3, \"totalElements\": 21}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Invalid pagination parameters",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(ref = "#/components/schemas/ErrorResponse"),
+                examples = @ExampleObject(
+                    name = "Invalid Size",
+                    value = "{\"code\": \"VALIDATION_ERROR\", \"message\": \"Invalid pagination parameters.\", \"details\": [{\"field\": \"size\", \"issue\": \"must be between 1 and 100\"}]}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Pet not found",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(ref = "#/components/schemas/ErrorResponse"),
+                examples = @ExampleObject(
+                    name = "Pet Not Found",
+                    value = "{\"code\": \"NOT_FOUND\", \"message\": \"pet not found\", \"details\": [{\"field\": \"petId\", \"issue\": \"unknown\"}]}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(ref = "#/components/schemas/ErrorResponse"),
+                examples = @ExampleObject(
+                    name = "Internal Error",
+                    value = "{\"code\": \"INTERNAL_ERROR\", \"message\": \"An unexpected error occurred.\", \"details\": []}"
+                )
+            )
+        )
+    })
+    public ResponseEntity<WalksPageResponse> listWalksByPet(
+            @Parameter(
+                description = "ID of the pet to list walks for",
+                required = true,
+                example = "42"
+            )
+            @RequestParam("petId") Long petId,
+            @Parameter(
+                description = "Page number (zero-based, default: 0)",
+                example = "0"
+            )
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @Parameter(
+                description = "Page size (1-100, default: 10)",
+                example = "10"
+            )
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            throw new PaginationValidationException("Page must be >= 0");
+        }
+        if (size < 1 || size > 100) {
+            throw new PaginationValidationException("Size must be between 1 and 100");
+        }
+        
+        WalksPageResponse response = walkService.listByPet(petId, page, size);
         return ResponseEntity.ok(response);
     }
 }

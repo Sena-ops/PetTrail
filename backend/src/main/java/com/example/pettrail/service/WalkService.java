@@ -2,6 +2,8 @@ package com.example.pettrail.service;
 
 import com.example.pettrail.dto.StartWalkResponse;
 import com.example.pettrail.dto.StopWalkResponse;
+import com.example.pettrail.dto.WalksPageResponse;
+import com.example.pettrail.dto.WalkListItem;
 import com.example.pettrail.exception.PetNotFoundException;
 import com.example.pettrail.exception.ActiveWalkExistsException;
 import com.example.pettrail.exception.WalkNotFoundException;
@@ -15,6 +17,9 @@ import com.example.pettrail.repository.WalkPointRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +29,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class WalkService {
@@ -204,5 +210,47 @@ public class WalkService {
 
         // Distance in meters
         return EARTH_RADIUS_M * c;
+    }
+
+    /**
+     * List walks for a pet with pagination
+     * @param petId the pet ID
+     * @param page page number (zero-based)
+     * @param size page size
+     * @return WalksPageResponse with paginated walks
+     * @throws PetNotFoundException if pet doesn't exist
+     */
+    @Transactional(readOnly = true)
+    public WalksPageResponse listByPet(Long petId, int page, int size) {
+        // Check if pet exists
+        if (!petRepository.existsById(petId)) {
+            throw new PetNotFoundException("Pet not found with ID: " + petId);
+        }
+
+        // Create pageable request
+        Pageable pageable = PageRequest.of(page, size);
+        
+        // Get paginated walks
+        Page<Walk> walksPage = walkRepository.findByPetIdOrderByStartedAtDesc(petId, pageable);
+        
+        // Convert to DTOs
+        List<WalkListItem> walkItems = walksPage.getContent().stream()
+                .map(walk -> new WalkListItem(
+                        walk.getId(),
+                        walk.getStartedAt(),
+                        walk.getFinishedAt(),
+                        walk.getDistanciaM(),
+                        walk.getDuracaoS(),
+                        walk.getVelMediaKmh()
+                ))
+                .collect(Collectors.toList());
+        
+        return new WalksPageResponse(
+                walkItems,
+                walksPage.getNumber(),
+                walksPage.getSize(),
+                walksPage.getTotalPages(),
+                walksPage.getTotalElements()
+        );
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -138,6 +139,48 @@ public class GlobalExceptionHandler {
         );
 
         logger.warn("Method argument type mismatch: {}", errorResponse);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
+        String field = ex.getParameterName();
+        String issue = "required";
+        
+        ValidationError validationError = new ValidationError(field, issue);
+        ErrorResponse errorResponse = new ErrorResponse(
+                ErrorCode.VALIDATION_ERROR,
+                "Missing required parameter.",
+                List.of(validationError)
+        );
+
+        logger.warn("Missing request parameter: {}", errorResponse);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(PaginationValidationException.class)
+    public ResponseEntity<ErrorResponse> handlePaginationValidationException(PaginationValidationException ex) {
+        String message = ex.getMessage();
+        String field = "pagination";
+        String issue = "invalid parameters";
+        
+        // Parse the message to determine which field failed validation
+        if (message.contains("Page must be")) {
+            field = "page";
+            issue = "must be >= 0";
+        } else if (message.contains("Size must be")) {
+            field = "size";
+            issue = "must be between 1 and 100";
+        }
+        
+        ValidationError validationError = new ValidationError(field, issue);
+        ErrorResponse errorResponse = new ErrorResponse(
+                ErrorCode.VALIDATION_ERROR,
+                "Invalid pagination parameters.",
+                List.of(validationError)
+        );
+
+        logger.warn("Pagination validation error: {}", errorResponse);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 

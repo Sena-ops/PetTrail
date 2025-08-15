@@ -1,8 +1,11 @@
 package com.example.pettrail.service;
 
 import com.example.pettrail.dto.StopWalkResponse;
+import com.example.pettrail.dto.WalksPageResponse;
+import com.example.pettrail.dto.WalkListItem;
 import com.example.pettrail.exception.WalkFinishedException;
 import com.example.pettrail.exception.WalkNotFoundException;
+import com.example.pettrail.exception.PetNotFoundException;
 import com.example.pettrail.model.Pet;
 import com.example.pettrail.model.Walk;
 import com.example.pettrail.model.WalkPoint;
@@ -21,6 +24,10 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -168,5 +175,108 @@ class WalkServiceTest {
         assertEquals(0.0, response.getDistanciaM());
         assertTrue(response.getDuracaoS() > 0);
         assertEquals(0.0, response.getVelMediaKmh());
+    }
+
+    @Test
+    void listByPet_Success() {
+        // Arrange
+        Long petId = 1L;
+        int page = 0;
+        int size = 10;
+        
+        when(petRepository.existsById(petId)).thenReturn(true);
+        
+        List<Walk> walks = Arrays.asList(finishedWalk, activeWalk);
+        Page<Walk> walksPage = new PageImpl<>(walks, PageRequest.of(page, size), 2);
+        when(walkRepository.findByPetIdOrderByStartedAtDesc(petId, PageRequest.of(page, size)))
+                .thenReturn(walksPage);
+
+        // Act
+        WalksPageResponse response = walkService.listByPet(petId, page, size);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(2, response.getContent().size());
+        assertEquals(0, response.getPage());
+        assertEquals(10, response.getSize());
+        assertEquals(1, response.getTotalPages());
+        assertEquals(2L, response.getTotalElements());
+        
+        // Verify content is ordered by startedAt DESC
+        WalkListItem firstWalk = response.getContent().get(0);
+        assertEquals(finishedWalk.getId(), firstWalk.getId());
+        assertEquals(finishedWalk.getStartedAt(), firstWalk.getStartedAt());
+        assertEquals(finishedWalk.getFinishedAt(), firstWalk.getFinishedAt());
+        assertEquals(finishedWalk.getDistanciaM(), firstWalk.getDistanciaM());
+        assertEquals(finishedWalk.getDuracaoS(), firstWalk.getDuracaoS());
+        assertEquals(finishedWalk.getVelMediaKmh(), firstWalk.getVelMediaKmh());
+    }
+
+    @Test
+    void listByPet_PetNotFound() {
+        // Arrange
+        Long petId = 999L;
+        int page = 0;
+        int size = 10;
+        
+        when(petRepository.existsById(petId)).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(PetNotFoundException.class, () -> {
+            walkService.listByPet(petId, page, size);
+        });
+
+        verify(walkRepository, never()).findByPetIdOrderByStartedAtDesc(any(), any());
+    }
+
+    @Test
+    void listByPet_EmptyResult() {
+        // Arrange
+        Long petId = 1L;
+        int page = 0;
+        int size = 10;
+        
+        when(petRepository.existsById(petId)).thenReturn(true);
+        
+        Page<Walk> emptyPage = new PageImpl<>(Arrays.asList(), PageRequest.of(page, size), 0);
+        when(walkRepository.findByPetIdOrderByStartedAtDesc(petId, PageRequest.of(page, size)))
+                .thenReturn(emptyPage);
+
+        // Act
+        WalksPageResponse response = walkService.listByPet(petId, page, size);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(0, response.getContent().size());
+        assertEquals(0, response.getPage());
+        assertEquals(10, response.getSize());
+        assertEquals(0, response.getTotalPages());
+        assertEquals(0L, response.getTotalElements());
+    }
+
+    @Test
+    void listByPet_Pagination() {
+        // Arrange
+        Long petId = 1L;
+        int page = 1;
+        int size = 5;
+        
+        when(petRepository.existsById(petId)).thenReturn(true);
+        
+        List<Walk> walks = Arrays.asList(finishedWalk);
+        Page<Walk> walksPage = new PageImpl<>(walks, PageRequest.of(page, size), 6);
+        when(walkRepository.findByPetIdOrderByStartedAtDesc(petId, PageRequest.of(page, size)))
+                .thenReturn(walksPage);
+
+        // Act
+        WalksPageResponse response = walkService.listByPet(petId, page, size);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(1, response.getContent().size());
+        assertEquals(1, response.getPage());
+        assertEquals(5, response.getSize());
+        assertEquals(2, response.getTotalPages());
+        assertEquals(6L, response.getTotalElements());
     }
 }
