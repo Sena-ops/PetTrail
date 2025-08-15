@@ -3,6 +3,7 @@ package com.example.pettrail.service;
 import com.example.pettrail.dto.StopWalkResponse;
 import com.example.pettrail.dto.WalksPageResponse;
 import com.example.pettrail.dto.WalkListItem;
+import com.example.pettrail.dto.WalkGeoJsonResponse;
 import com.example.pettrail.exception.WalkFinishedException;
 import com.example.pettrail.exception.WalkNotFoundException;
 import com.example.pettrail.exception.PetNotFoundException;
@@ -278,5 +279,89 @@ class WalkServiceTest {
         assertEquals(5, response.getSize());
         assertEquals(2, response.getTotalPages());
         assertEquals(6L, response.getTotalElements());
+    }
+
+    @Test
+    void getGeoJson_Success() {
+        // Arrange
+        Long walkId = 123L;
+        when(walkRepository.existsById(walkId)).thenReturn(true);
+        when(walkPointRepository.findByWalkIdOrderByTimestamp(walkId)).thenReturn(testPoints);
+
+        // Act
+        WalkGeoJsonResponse response = walkService.getGeoJson(walkId);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals("Feature", response.getType());
+        assertEquals("LineString", response.getGeometry().getType());
+        assertEquals(walkId, response.getProperties().getWalkId());
+        
+        // Verify coordinates are in [lon, lat] order
+        List<List<Double>> coordinates = response.getGeometry().getCoordinates();
+        assertEquals(2, coordinates.size());
+        
+        // First point: [-46.6333, -23.5505]
+        assertEquals(-46.6333, coordinates.get(0).get(0));
+        assertEquals(-23.5505, coordinates.get(0).get(1));
+        
+        // Second point: [-46.6339, -23.5510]
+        assertEquals(-46.6339, coordinates.get(1).get(0));
+        assertEquals(-23.5510, coordinates.get(1).get(1));
+    }
+
+    @Test
+    void getGeoJson_EmptyRoute() {
+        // Arrange
+        Long walkId = 123L;
+        when(walkRepository.existsById(walkId)).thenReturn(true);
+        when(walkPointRepository.findByWalkIdOrderByTimestamp(walkId)).thenReturn(Arrays.asList());
+
+        // Act
+        WalkGeoJsonResponse response = walkService.getGeoJson(walkId);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals("Feature", response.getType());
+        assertEquals("LineString", response.getGeometry().getType());
+        assertEquals(walkId, response.getProperties().getWalkId());
+        assertTrue(response.getGeometry().getCoordinates().isEmpty());
+    }
+
+    @Test
+    void getGeoJson_WalkNotFound() {
+        // Arrange
+        Long walkId = 999L;
+        when(walkRepository.existsById(walkId)).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(WalkNotFoundException.class, () -> {
+            walkService.getGeoJson(walkId);
+        });
+
+        verify(walkPointRepository, never()).findByWalkIdOrderByTimestamp(any());
+    }
+
+    @Test
+    void getGeoJson_CoordinatesOrder() {
+        // Arrange
+        Long walkId = 123L;
+        when(walkRepository.existsById(walkId)).thenReturn(true);
+        when(walkPointRepository.findByWalkIdOrderByTimestamp(walkId)).thenReturn(testPoints);
+
+        // Act
+        WalkGeoJsonResponse response = walkService.getGeoJson(walkId);
+
+        // Assert - Verify coordinates are in GeoJSON standard [lon, lat] order
+        List<List<Double>> coordinates = response.getGeometry().getCoordinates();
+        assertFalse(coordinates.isEmpty());
+        
+        for (List<Double> coordinate : coordinates) {
+            assertEquals(2, coordinate.size());
+            // First element should be longitude (can be negative or positive)
+            assertTrue(coordinate.get(0) >= -180.0 && coordinate.get(0) <= 180.0);
+            // Second element should be latitude (can be negative or positive)
+            assertTrue(coordinate.get(1) >= -90.0 && coordinate.get(1) <= 90.0);
+        }
     }
 }

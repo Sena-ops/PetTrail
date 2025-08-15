@@ -5,6 +5,7 @@ import com.example.pettrail.dto.StopWalkResponse;
 import com.example.pettrail.dto.WalkPointRequest;
 import com.example.pettrail.dto.WalkPointsBatchResponse;
 import com.example.pettrail.dto.WalksPageResponse;
+import com.example.pettrail.dto.WalkGeoJsonResponse;
 import com.example.pettrail.exception.PaginationValidationException;
 import com.example.pettrail.service.WalkService;
 import com.example.pettrail.service.WalkPointsService;
@@ -346,6 +347,67 @@ public class WalkController {
         }
         
         WalksPageResponse response = walkService.listByPet(petId, page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/geojson")
+    @Operation(
+        summary = "Get walk route as GeoJSON",
+        description = "Get a walk's route as a GeoJSON Feature with LineString geometry. Coordinates are in WGS84 [longitude, latitude] order for OpenStreetMap/Leaflet compatibility. Returns empty LineString if walk has no points."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "GeoJSON Feature with walk route",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = WalkGeoJsonResponse.class),
+                examples = {
+                    @ExampleObject(
+                        name = "Walk with points",
+                        value = "{\"type\":\"Feature\",\"geometry\":{\"type\":\"LineString\",\"coordinates\":[[-46.6333,-23.5505],[-46.6339,-23.5510]]},\"properties\":{\"walkId\":123}}"
+                    ),
+                    @ExampleObject(
+                        name = "Walk without points",
+                        value = "{\"type\":\"Feature\",\"geometry\":{\"type\":\"LineString\",\"coordinates\":[]},\"properties\":{\"walkId\":123}}"
+                    )
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Walk not found",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(ref = "#/components/schemas/ErrorResponse"),
+                examples = @ExampleObject(
+                    name = "Walk Not Found",
+                    value = "{\"code\": \"NOT_FOUND\", \"message\": \"walk not found\", \"details\": [{\"field\": \"id\", \"issue\": \"unknown\"}]}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(ref = "#/components/schemas/ErrorResponse"),
+                examples = @ExampleObject(
+                    name = "Internal Error",
+                    value = "{\"code\": \"INTERNAL_ERROR\", \"message\": \"An unexpected error occurred.\", \"details\": []}"
+                )
+            )
+        )
+    })
+    public ResponseEntity<WalkGeoJsonResponse> getWalkGeoJson(
+            @Parameter(
+                description = "ID of the walk to get GeoJSON for",
+                required = true,
+                example = "123"
+            )
+            @PathVariable("id") Long walkId) {
+        
+        WalkGeoJsonResponse response = walkService.getGeoJson(walkId);
         return ResponseEntity.ok(response);
     }
 }

@@ -92,10 +92,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(WalkNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleWalkNotFoundException(WalkNotFoundException ex) {
+        ValidationError validationError = new ValidationError("id", "unknown");
         ErrorResponse errorResponse = new ErrorResponse(
                 ErrorCode.NOT_FOUND,
                 "walk not found",
-                List.of()
+                List.of(validationError)
         );
 
         logger.warn("Walk not found: {}", errorResponse);

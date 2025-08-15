@@ -2,8 +2,10 @@ package com.example.pettrail.controller;
 
 import com.example.pettrail.dto.WalksPageResponse;
 import com.example.pettrail.dto.WalkListItem;
+import com.example.pettrail.dto.WalkGeoJsonResponse;
 import com.example.pettrail.exception.PetNotFoundException;
 import com.example.pettrail.exception.PaginationValidationException;
+import com.example.pettrail.exception.WalkNotFoundException;
 import com.example.pettrail.service.WalkService;
 import com.example.pettrail.service.WalkPointsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -184,6 +186,82 @@ class WalkControllerTest {
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("Invalid query parameter."))
                 .andExpect(jsonPath("$.details[0].field").value("petId"))
+                .andExpect(jsonPath("$.details[0].issue").value("required numeric id"));
+    }
+
+    @Test
+    void getWalkGeoJson_Success() throws Exception {
+        // Arrange
+        Long walkId = 123L;
+        WalkGeoJsonResponse expectedResponse = new WalkGeoJsonResponse(
+                walkId, 
+                Arrays.asList(
+                        Arrays.asList(-46.6333, -23.5505),
+                        Arrays.asList(-46.6339, -23.5510)
+                )
+        );
+        
+        when(walkService.getGeoJson(walkId)).thenReturn(expectedResponse);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/walks/123/geojson")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.type").value("Feature"))
+                .andExpect(jsonPath("$.geometry.type").value("LineString"))
+                .andExpect(jsonPath("$.geometry.coordinates[0][0]").value(-46.6333))
+                .andExpect(jsonPath("$.geometry.coordinates[0][1]").value(-23.5505))
+                .andExpect(jsonPath("$.geometry.coordinates[1][0]").value(-46.6339))
+                .andExpect(jsonPath("$.geometry.coordinates[1][1]").value(-23.5510))
+                .andExpect(jsonPath("$.properties.walkId").value(123));
+    }
+
+    @Test
+    void getWalkGeoJson_EmptyRoute() throws Exception {
+        // Arrange
+        Long walkId = 123L;
+        WalkGeoJsonResponse expectedResponse = new WalkGeoJsonResponse(walkId, Arrays.asList());
+        
+        when(walkService.getGeoJson(walkId)).thenReturn(expectedResponse);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/walks/123/geojson")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.type").value("Feature"))
+                .andExpect(jsonPath("$.geometry.type").value("LineString"))
+                .andExpect(jsonPath("$.geometry.coordinates").isEmpty())
+                .andExpect(jsonPath("$.properties.walkId").value(123));
+    }
+
+    @Test
+    void getWalkGeoJson_WalkNotFound() throws Exception {
+        // Arrange
+        Long walkId = 999L;
+        when(walkService.getGeoJson(walkId))
+                .thenThrow(new WalkNotFoundException("Walk not found with ID: " + walkId));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/walks/999/geojson")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("walk not found"))
+                .andExpect(jsonPath("$.details[0].field").value("id"))
+                .andExpect(jsonPath("$.details[0].issue").value("unknown"));
+    }
+
+    @Test
+    void getWalkGeoJson_InvalidWalkId() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/walks/invalid/geojson")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("Invalid query parameter."))
+                .andExpect(jsonPath("$.details[0].field").value("id"))
                 .andExpect(jsonPath("$.details[0].issue").value("required numeric id"));
     }
 }

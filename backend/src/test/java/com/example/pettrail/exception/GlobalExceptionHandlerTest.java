@@ -88,7 +88,9 @@ class GlobalExceptionHandlerTest {
         assertNotNull(response.getBody());
         assertEquals(ErrorCode.NOT_FOUND, response.getBody().getCode());
         assertEquals("walk not found", response.getBody().getMessage());
-        assertEquals(0, response.getBody().getDetails().size());
+        assertEquals(1, response.getBody().getDetails().size());
+        assertEquals("id", response.getBody().getDetails().get(0).getField());
+        assertEquals("unknown", response.getBody().getDetails().get(0).getIssue());
     }
 
     @Test

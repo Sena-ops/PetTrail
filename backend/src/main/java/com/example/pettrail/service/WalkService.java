@@ -4,6 +4,7 @@ import com.example.pettrail.dto.StartWalkResponse;
 import com.example.pettrail.dto.StopWalkResponse;
 import com.example.pettrail.dto.WalksPageResponse;
 import com.example.pettrail.dto.WalkListItem;
+import com.example.pettrail.dto.WalkGeoJsonResponse;
 import com.example.pettrail.exception.PetNotFoundException;
 import com.example.pettrail.exception.ActiveWalkExistsException;
 import com.example.pettrail.exception.WalkNotFoundException;
@@ -252,5 +253,32 @@ public class WalkService {
                 walksPage.getTotalPages(),
                 walksPage.getTotalElements()
         );
+    }
+
+    /**
+     * Get GeoJSON representation of a walk's route
+     * @param walkId the walk ID
+     * @return WalkGeoJsonResponse with GeoJSON Feature containing LineString geometry
+     * @throws WalkNotFoundException if walk doesn't exist
+     */
+    @Transactional(readOnly = true)
+    public WalkGeoJsonResponse getGeoJson(Long walkId) {
+        // Check if walk exists
+        if (!walkRepository.existsById(walkId)) {
+            throw new WalkNotFoundException("Walk not found with ID: " + walkId);
+        }
+
+        // Get all accepted points for the walk (ordered by timestamp)
+        List<WalkPoint> points = walkPointRepository.findByWalkIdOrderByTimestamp(walkId);
+        
+        // Convert points to GeoJSON coordinates [lon, lat] format
+        List<List<Double>> coordinates = points.stream()
+                .map(point -> List.of(
+                        point.getLongitude().doubleValue(),
+                        point.getLatitude().doubleValue()
+                ))
+                .collect(Collectors.toList());
+        
+        return new WalkGeoJsonResponse(walkId, coordinates);
     }
 }
