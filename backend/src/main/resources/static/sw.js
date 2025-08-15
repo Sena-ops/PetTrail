@@ -3,13 +3,13 @@ const STATIC_CACHE = 'pattrail-static-v2';
 
 // Files to cache (app shell only)
 const STATIC_FILES = [
-    '/web/',
-    '/web/index.html',
-    '/web/styles.css',
-    '/web/app.js',
-    '/web/db.js',
-    '/web/net.js',
-    '/web/manifest.webmanifest',
+    '/',
+    '/index.html',
+    '/styles.css',
+    '/app.js',
+    '/db.js',
+    '/net.js',
+    '/manifest.webmanifest',
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
@@ -84,7 +84,7 @@ self.addEventListener('fetch', event => {
                 .catch(() => {
                     // Return offline page or fallback for HTML requests
                     if (event.request.destination === 'document') {
-                        return caches.match('/web/index.html');
+                        return caches.match('/index.html');
                     }
                 })
         );
@@ -160,8 +160,8 @@ self.addEventListener('push', event => {
         const data = event.data.json();
         const options = {
             body: data.body || 'New notification from PatTrail',
-            icon: '/web/icons/icon-192x192.png',
-            badge: '/web/icons/icon-72x72.png',
+            icon: '/icons/icon-192x192.png',
+            badge: '/icons/icon-72x72.png',
             tag: 'pattrail-notification',
             data: data
         };
@@ -182,12 +182,12 @@ self.addEventListener('notificationclick', event => {
         self.clients.matchAll({ type: 'window' }).then(clients => {
             // Focus existing window or open new one
             for (let client of clients) {
-                if (client.url.includes('/web/') && 'focus' in client) {
+                if (client.url.includes('/') && 'focus' in client) {
                     return client.focus();
                 }
             }
             if (self.clients.openWindow) {
-                return self.clients.openWindow('/web/');
+                return self.clients.openWindow('/');
             }
         })
     );

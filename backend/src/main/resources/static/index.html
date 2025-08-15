@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#4CAF50">
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="manifest" href="/manifest.webmanifest">
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
@@ -16,7 +16,7 @@
           crossorigin=""/>
     
     <!-- App Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
     <div id="map"></div>
@@ -79,15 +79,15 @@
             crossorigin=""></script>
     
     <!-- App Scripts -->
-    <script src="db.js"></script>
-    <script src="net.js"></script>
-    <script src="app.js"></script>
+    <script src="/db.js"></script>
+    <script src="/net.js"></script>
+    <script src="/app.js"></script>
     
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
+                navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
                         console.log('SW registered: ', registration);
                     })
