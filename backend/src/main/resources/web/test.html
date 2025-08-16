@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PatTrail PWA Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>PatTrail PWA Test Page</h1>
+    
+    <div class="test-section info">
+        <h3>Backend Status</h3>
+        <button class="btn-primary" onclick="testBackend()">Test Backend Connection</button>
+        <div id="backend-status"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>Pet Management</h3>
+        <button class="btn-primary" onclick="createPet()">Create Test Pet</button>
+        <button class="btn-primary" onclick="listPets()">List Pets</button>
+        <div id="pet-status"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>Walk Recording</h3>
+        <button class="btn-success" onclick="startWalk()">Start Walk</button>
+        <button class="btn-danger" onclick="stopWalk()">Stop Walk</button>
+        <div id="walk-status"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>PWA Features</h3>
+        <button class="btn-primary" onclick="testGeolocation()">Test GPS</button>
+        <button class="btn-primary" onclick="testIndexedDB()">Test IndexedDB</button>
+        <div id="pwa-status"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        let currentWalkId = null;
+
+        async function testBackend() {
+            const statusDiv = document.getElementById('backend-status');
+            try {
+                const response = await fetch(`${API_BASE}/pets`);
+                if (response.ok) {
+                    statusDiv.innerHTML = '<div class="success">✅ Backend is running and accessible</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="error">❌ Backend responded with error: ' + response.status + '</div>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="error">❌ Backend connection failed: ' + error.message + '</div>';
+            }
+        }
+
+        async function createPet() {
+            const statusDiv = document.getElementById('pet-status');
+            try {
+                const response = await fetch(`${API_BASE}/pets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Test Pet',
+                        species: 'CACHORRO',
+                        age: 2,
+                        race: 'Mixed Breed'
+                    })
+                });
+                
+                if (response.ok) {
+                    const pet = await response.json();
+                    statusDiv.innerHTML = '<div class="success">✅ Pet created: ' + pet.name + ' (ID: ' + pet.id + ')</div>';
+                } else {
+                    const error = await response.json();
+                    statusDiv.innerHTML = '<div class="error">❌ Failed to create pet: ' + JSON.stringify(error) + '</div>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="error">❌ Error creating pet: ' + error.message + '</div>';
+            }
+        }
+
+        async function listPets() {
+            const statusDiv = document.getElementById('pet-status');
+            try {
+                const response = await fetch(`${API_BASE}/pets`);
+                if (response.ok) {
+                    const pets = await response.json();
+                    statusDiv.innerHTML = '<div class="success">✅ Found ' + pets.length + ' pets:</div><pre>' + JSON.stringify(pets, null, 2) + '</pre>';
+                } else {
+                    statusDiv.innerHTML = '<div class="error">❌ Failed to list pets: ' + response.status + '</div>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="error">❌ Error listing pets: ' + error.message + '</div>';
+            }
+        }
+
+        async function startWalk() {
+            const statusDiv = document.getElementById('walk-status');
+            try {
+                const response = await fetch(`${API_BASE}/walks/start?petId=1`);
+                if (response.ok) {
+                    const result = await response.json();
+                    currentWalkId = result.walkId;
+                    statusDiv.innerHTML = '<div class="success">✅ Walk started: ID ' + result.walkId + ' at ' + result.startedAt + '</div>';
+                } else {
+                    const error = await response.json();
+                    statusDiv.innerHTML = '<div class="error">❌ Failed to start walk: ' + JSON.stringify(error) + '</div>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="error">❌ Error starting walk: ' + error.message + '</div>';
+            }
+        }
+
+        async function stopWalk() {
+            const statusDiv = document.getElementById('walk-status');
+            if (!currentWalkId) {
+                statusDiv.innerHTML = '<div class="error">❌ No active walk to stop</div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/walks/${currentWalkId}/stop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    statusDiv.innerHTML = '<div class="success">✅ Walk stopped: ' + result.distanciaM + 'm in ' + result.duracaoS + 's</div>';
+                    currentWalkId = null;
+                } else {
+                    const error = await response.json();
+                    statusDiv.innerHTML = '<div class="error">❌ Failed to stop walk: ' + JSON.stringify(error) + '</div>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="error">❌ Error stopping walk: ' + error.message + '</div>';
+            }
+        }
+
+        function testGeolocation() {
+            const statusDiv = document.getElementById('pwa-status');
+            if (!navigator.geolocation) {
+                statusDiv.innerHTML = '<div class="error">❌ Geolocation not supported</div>';
+                return;
+            }
+            
+            statusDiv.innerHTML = '<div class="info">📍 Requesting location...</div>';
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    statusDiv.innerHTML = '<div class="success">✅ GPS working: ' + 
+                        position.coords.latitude.toFixed(6) + ', ' + 
+                        position.coords.longitude.toFixed(6) + 
+                        ' (accuracy: ' + position.coords.accuracy + 'm)</div>';
+                },
+                (error) => {
+                    statusDiv.innerHTML = '<div class="error">❌ GPS error: ' + error.message + '</div>';
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+        }
+
+        async function testIndexedDB() {
+            const statusDiv = document.getElementById('pwa-status');
+            if (!window.indexedDB) {
+                statusDiv.innerHTML = '<div class="error">❌ IndexedDB not supported</div>';
+                return;
+            }
+            
+            try {
+                // Test basic IndexedDB functionality
+                const request = indexedDB.open('TestDB', 1);
+                request.onerror = () => {
+                    statusDiv.innerHTML = '<div class="error">❌ IndexedDB error: ' + request.error + '</div>';
+                };
+                request.onsuccess = () => {
+                    statusDiv.innerHTML = '<div class="success">✅ IndexedDB working</div>';
+                    request.result.close();
+                    indexedDB.deleteDatabase('TestDB');
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    db.createObjectStore('test');
+                };
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="error">❌ IndexedDB test failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Auto-test backend on page load
+        window.addEventListener('load', () => {
+            testBackend();
+        });
+    </script>
+</body>
+</html>
