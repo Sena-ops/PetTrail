@@ -60,6 +60,33 @@ class WalkNetworking {
     }
 
     /**
+     * Get all pets from the server
+     */
+    async getPets() {
+        try {
+            const response = await fetch(`${this.baseUrl}/pets`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const pets = await response.json();
+                console.log('Pets loaded:', pets);
+                return { success: true, data: pets };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to get pets:', response.status, errorData);
+                return { success: false, error: errorData };
+            }
+        } catch (error) {
+            console.error('Network error getting pets:', error);
+            return { success: false, error: { code: 'NETWORK_ERROR', message: error.message } };
+        }
+    }
+
+    /**
      * Start a walk for a pet
      */
     async startWalk(petId) {

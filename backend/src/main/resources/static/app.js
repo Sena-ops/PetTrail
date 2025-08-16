@@ -1,6 +1,7 @@
 /**
  * PatTrail PWA - GPS Recording Application
  * Implements GPS recording with batching and resilient delivery to backend
+ * Enhanced with offline support and state persistence
  */
 
 class PatTrailApp {
@@ -49,6 +50,15 @@ class PatTrailApp {
             // Initialize event listeners
             this.initEventListeners();
             
+            // Restore app state from IndexedDB
+            await this.restoreAppState();
+            
+            // Initialize status indicators
+            await this.networking.initStatusIndicators();
+            
+            // Load pets for selection
+            await this.loadPets();
+            
             // Update initial status
             await this.updateStatus();
             
@@ -56,6 +66,61 @@ class PatTrailApp {
         } catch (error) {
             console.error('Failed to initialize app:', error);
             this.showToast('error', 'Initialization Error', 'Failed to initialize the application.');
+        }
+    }
+
+    async restoreAppState() {
+        try {
+            const currentWalk = await this.walkQueue.getCurrentWalk();
+            if (currentWalk) {
+                console.log('Restoring app state from previous session:', currentWalk);
+                
+                this.currentWalkId = currentWalk.walkId;
+                this.recordingStartTime = currentWalk.startedAt;
+                this.isRecording = currentWalk.isRecording;
+                
+                if (this.isRecording) {
+                    // Resume recording
+                    await this.resumeRecording();
+                }
+            }
+        } catch (error) {
+            console.error('Error restoring app state:', error);
+        }
+    }
+
+    async resumeRecording() {
+        try {
+            console.log('Resuming recording for walk:', this.currentWalkId);
+            
+            // Start GPS tracking
+            await this.startGeolocationTracking();
+            
+            // Start flush timer
+            this.startFlushTimer();
+            
+            // Start recording timer
+            this.startRecordingTimer();
+            
+            // Update UI
+            this.startBtn.disabled = true;
+            this.stopBtn.disabled = false;
+            this.petSelect.disabled = true;
+            this.updateStatus('Recording walk...');
+            
+            // Update status indicators
+            this.networking.updateStatusIndicators();
+            
+            // Try to drain any pending batches
+            await this.networking.drainQueue();
+            
+            this.showToast('info', 'Recording Resumed', `Resumed recording for walk #${this.currentWalkId}`);
+            
+        } catch (error) {
+            console.error('Failed to resume recording:', error);
+            this.showToast('error', 'Resume Failed', 'Failed to resume recording. Please restart manually.');
+            this.isRecording = false;
+            this.currentWalkId = null;
         }
     }
 
@@ -90,6 +155,7 @@ class PatTrailApp {
         this.recordingTime = document.getElementById('recording-time');
         this.summaryModal = document.getElementById('summary-modal');
         this.summaryContent = document.getElementById('summary-content');
+        this.petSelect = document.getElementById('pet-select');
         
         // Initialize modal close functionality
         const closeBtn = this.summaryModal.querySelector('.close');
@@ -143,16 +209,69 @@ class PatTrailApp {
         }
     }
 
+    async loadPets() {
+        try {
+            this.updateStatus('Loading pets...');
+            
+            const result = await this.networking.getPets();
+            
+            if (!result.success) {
+                throw new Error(result.error?.message || 'Failed to load pets');
+            }
+            
+            const pets = result.data;
+            
+            // Clear existing options
+            this.petSelect.innerHTML = '';
+            
+            if (pets.length === 0) {
+                // No pets available
+                this.petSelect.innerHTML = '<option value="">No pets available</option>';
+                this.petSelect.disabled = true;
+                this.startBtn.disabled = true;
+                this.showToast('warning', 'No Pets', 'No pets are available. Please add a pet first.');
+            } else {
+                // Add default option
+                this.petSelect.innerHTML = '<option value="">Select a pet...</option>';
+                
+                // Add pet options
+                pets.forEach(pet => {
+                    const option = document.createElement('option');
+                    option.value = pet.id;
+                    option.textContent = `${pet.name} (${pet.species})`;
+                    this.petSelect.appendChild(option);
+                });
+                
+                this.petSelect.disabled = false;
+                this.startBtn.disabled = false;
+            }
+            
+            this.updateStatus('Ready to record');
+            
+        } catch (error) {
+            console.error('Failed to load pets:', error);
+            this.petSelect.innerHTML = '<option value="">Failed to load pets</option>';
+            this.petSelect.disabled = true;
+            this.startBtn.disabled = true;
+            this.showToast('error', 'Load Failed', 'Failed to load pets. Please refresh the page.');
+            this.updateStatus('Failed to load pets');
+        }
+    }
+
     async startRecording() {
         try {
+            // Check if a pet is selected
+            const selectedPetId = this.petSelect.value;
+            if (!selectedPetId) {
+                this.showToast('error', 'No Pet Selected', 'Please select a pet to start recording.');
+                return;
+            }
+            
             this.startBtn.disabled = true;
             this.updateStatus('Starting walk...');
             
-            // For demo purposes, use pet ID 1 (you might want to add a pet selection UI)
-            const petId = 1;
-            
             // Call backend to start walk
-            const result = await this.networking.startWalk(petId);
+            const result = await this.networking.startWalk(selectedPetId);
             
             if (!result.success) {
                 throw new Error(result.error?.message || 'Failed to start walk');
@@ -161,6 +280,9 @@ class PatTrailApp {
             // Store walk ID and start time
             this.currentWalkId = result.data.walkId;
             this.recordingStartTime = new Date(result.data.startedAt);
+            
+            // Persist walk state to IndexedDB
+            await this.walkQueue.saveCurrentWalk(this.currentWalkId, this.recordingStartTime.toISOString());
             
             // Start GPS tracking
             await this.startGeolocationTracking();
@@ -184,7 +306,11 @@ class PatTrailApp {
             this.isRecording = true;
             this.startBtn.disabled = true;
             this.stopBtn.disabled = false;
+            this.petSelect.disabled = true;
             this.updateStatus('Recording walk...');
+            
+            // Update status indicators
+            this.networking.updateStatusIndicators();
             
             this.showToast('success', 'Walk Started', `Recording started for walk #${this.currentWalkId}`);
             
@@ -349,6 +475,9 @@ class PatTrailApp {
             // Show summary
             this.showWalkSummary(result.data);
             
+            // Clear walk state from IndexedDB
+            await this.walkQueue.clearCurrentWalk();
+            
             // Reset state
             this.isRecording = false;
             this.currentWalkId = null;
@@ -359,9 +488,13 @@ class PatTrailApp {
             // Update UI
             this.startBtn.disabled = false;
             this.stopBtn.disabled = true;
+            this.petSelect.disabled = false;
             this.updateStatus('Ready to record');
             this.updatePointsCount();
             this.updateRecordingTime();
+            
+            // Update status indicators
+            this.networking.updateStatusIndicators();
             
             this.showToast('success', 'Walk Completed', 'Recording stopped successfully');
             
@@ -455,6 +588,7 @@ class PatTrailApp {
 
     async updateStatus() {
         await this.networking.updateQueueStatus();
+        this.networking.updateStatusIndicators();
     }
 
     handleOnline() {

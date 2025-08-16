@@ -6,7 +6,7 @@
 class WalkQueueDB {
     constructor() {
         this.dbName = 'WalkQueueDB';
-        this.version = 1;
+        this.version = 2;
         this.storeName = 'batches';
         this.db = null;
     }
@@ -15,25 +15,46 @@ class WalkQueueDB {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(this.dbName, this.version);
 
-            request.onerror = () => reject(request.error);
+            request.onerror = () => {
+                console.error('Failed to open database:', request.error);
+                // Try to delete the database and recreate it
+                this.deleteDatabase().then(() => {
+                    console.log('Database deleted, retrying initialization...');
+                    this.init().then(resolve).catch(reject);
+                }).catch(reject);
+            };
+            
             request.onsuccess = () => {
                 this.db = request.result;
+                console.log('Database initialized successfully');
                 resolve();
             };
 
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
+                const oldVersion = event.oldVersion;
                 
-                // Create object store for batches
-                const store = db.createObjectStore(this.storeName, {
-                    keyPath: 'id',
-                    autoIncrement: true
-                });
+                console.log(`Upgrading database from version ${oldVersion} to ${this.version}`);
+                
+                // Create object store for batches if it doesn't exist
+                if (!db.objectStoreNames.contains(this.storeName)) {
+                    const store = db.createObjectStore(this.storeName, {
+                        keyPath: 'id',
+                        autoIncrement: true
+                    });
 
-                // Create indexes
-                store.createIndex('walkId', 'walkId', { unique: false });
-                store.createIndex('nextAttemptAt', 'nextAttemptAt', { unique: false });
-                store.createIndex('retryCount', 'retryCount', { unique: false });
+                    // Create indexes
+                    store.createIndex('walkId', 'walkId', { unique: false });
+                    store.createIndex('nextAttemptAt', 'nextAttemptAt', { unique: false });
+                    store.createIndex('retryCount', 'retryCount', { unique: false });
+                }
+                
+                // Create metadata store if it doesn't exist
+                if (!db.objectStoreNames.contains('metadata')) {
+                    const metadataStore = db.createObjectStore('metadata', {
+                        keyPath: 'key'
+                    });
+                }
             };
         });
     }
@@ -199,6 +220,110 @@ class WalkQueueDB {
             };
             
             request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Metadata storage methods
+    async setMetadata(key, value) {
+        if (!this.db) await this.init();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['metadata'], 'readwrite');
+            const store = transaction.objectStore('metadata');
+            
+            const request = store.put({ key, value });
+            
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getMetadata(key) {
+        if (!this.db) await this.init();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['metadata'], 'readonly');
+            const store = transaction.objectStore('metadata');
+            
+            const request = store.get(key);
+            
+            request.onsuccess = () => {
+                const result = request.result;
+                resolve(result ? result.value : null);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async removeMetadata(key) {
+        if (!this.db) await this.init();
+        
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['metadata'], 'readwrite');
+            const store = transaction.objectStore('metadata');
+            
+            const request = store.delete(key);
+            
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // App state persistence methods
+    async saveCurrentWalk(walkData) {
+        await this.setMetadata('currentWalkId', walkData.walkId);
+        await this.setMetadata('walkPetId', walkData.petId);
+        await this.setMetadata('walkStartedAt', walkData.startedAt);
+        await this.setMetadata('isRecording', walkData.isRecording);
+    }
+
+    async getCurrentWalk() {
+        const walkId = await this.getMetadata('currentWalkId');
+        const petId = await this.getMetadata('walkPetId');
+        const startedAt = await this.getMetadata('walkStartedAt');
+        const isRecording = await this.getMetadata('isRecording');
+        
+        if (walkId && startedAt && isRecording) {
+            return {
+                walkId: parseInt(walkId),
+                petId: petId ? parseInt(petId) : null,
+                startedAt: new Date(startedAt),
+                isRecording: Boolean(isRecording)
+            };
+        }
+        return null;
+    }
+
+    async clearCurrentWalk() {
+        await this.removeMetadata('currentWalkId');
+        await this.removeMetadata('walkPetId');
+        await this.removeMetadata('walkStartedAt');
+        await this.setMetadata('isRecording', false);
+    }
+
+    async updateLastSynced() {
+        await this.setMetadata('lastSyncedAt', Date.now());
+    }
+
+    async getLastSynced() {
+        const timestamp = await this.getMetadata('lastSyncedAt');
+        return timestamp ? new Date(timestamp) : null;
+    }
+
+    async deleteDatabase() {
+        return new Promise((resolve, reject) => {
+            if (this.db) {
+                this.db.close();
+                this.db = null;
+            }
+            
+            const request = indexedDB.deleteDatabase(this.dbName);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                console.log('Database deleted successfully');
+                resolve();
+            };
         });
     }
 }

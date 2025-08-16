@@ -21,12 +21,38 @@
 <body>
     <div id="map"></div>
     
+    <!-- Status Indicators -->
+    <div id="status-indicators" class="status-indicators">
+        <div id="recording-indicator" class="status-indicator recording" style="display: none;">
+            <span class="indicator-icon">●</span>
+            <span class="indicator-text">Recording</span>
+        </div>
+        <div id="offline-indicator" class="status-indicator offline" style="display: none;">
+            <span class="indicator-icon">⚠</span>
+            <span class="indicator-text">Offline</span>
+        </div>
+        <div id="syncing-indicator" class="status-indicator syncing" style="display: none;">
+            <span class="indicator-icon">↻</span>
+            <span class="indicator-text">Syncing</span>
+        </div>
+    </div>
+    
     <!-- Recording Controls -->
     <div id="recording-controls" class="recording-controls">
         <div class="control-panel">
             <div class="status-display">
                 <div id="status-text" class="status-text">Ready to record</div>
                 <div id="status-details" class="status-details"></div>
+                <div id="last-synced" class="last-synced" style="display: none;">
+                    Last synced: <span id="last-synced-time">Never</span>
+                </div>
+            </div>
+            
+            <div class="pet-selection">
+                <label for="pet-select" class="pet-label">Select Pet:</label>
+                <select id="pet-select" class="pet-select">
+                    <option value="">Loading pets...</option>
+                </select>
             </div>
             
             <div class="button-group">

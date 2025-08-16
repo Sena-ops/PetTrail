@@ -55,6 +55,33 @@ class WalkNetworking {
     }
 
     /**
+     * Get all pets from the server
+     */
+    async getPets() {
+        try {
+            const response = await fetch(`${this.baseUrl}/pets`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const pets = await response.json();
+                console.log('Pets loaded:', pets);
+                return { success: true, data: pets };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to get pets:', response.status, errorData);
+                return { success: false, error: errorData };
+            }
+        } catch (error) {
+            console.error('Network error getting pets:', error);
+            return { success: false, error: { code: 'NETWORK_ERROR', message: error.message } };
+        }
+    }
+
+    /**
      * Start a walk for a pet
      */
     async startWalk(petId) {
@@ -128,6 +155,7 @@ class WalkNetworking {
         }
 
         this.drainingQueue = true;
+        this.setSyncingIndicator(true);
         console.log('Starting queue drain...');
 
         try {
@@ -180,12 +208,14 @@ class WalkNetworking {
                     
                     // Update UI
                     this.updateQueueStatus();
+                    this.updateLastSyncedDisplay();
                 }
             }
         } catch (error) {
             console.error('Error draining queue:', error);
         } finally {
             this.drainingQueue = false;
+            this.setSyncingIndicator(false);
             console.log('Queue drain completed');
         }
     }
@@ -206,6 +236,76 @@ class WalkNetworking {
         } catch (error) {
             console.error('Error updating queue status:', error);
         }
+    }
+
+    /**
+     * Update last synced display
+     */
+    async updateLastSyncedDisplay() {
+        try {
+            const lastSynced = await window.walkQueue.getLastSynced();
+            const lastSyncedElement = document.getElementById('last-synced');
+            const lastSyncedTimeElement = document.getElementById('last-synced-time');
+            
+            if (lastSyncedElement && lastSyncedTimeElement) {
+                if (lastSynced) {
+                    const timeString = lastSynced.toLocaleTimeString();
+                    lastSyncedTimeElement.textContent = timeString;
+                    lastSyncedElement.style.display = 'block';
+                } else {
+                    lastSyncedElement.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Error updating last synced display:', error);
+        }
+    }
+
+    /**
+     * Set syncing indicator
+     */
+    setSyncingIndicator(show) {
+        this.isSyncing = show;
+        const syncingIndicator = document.getElementById('syncing-indicator');
+        if (syncingIndicator) {
+            syncingIndicator.style.display = show ? 'flex' : 'none';
+        }
+        this.updateStatusIndicators();
+    }
+
+    /**
+     * Update all status indicators
+     */
+    updateStatusIndicators() {
+        const recordingIndicator = document.getElementById('recording-indicator');
+        const offlineIndicator = document.getElementById('offline-indicator');
+        const syncingIndicator = document.getElementById('syncing-indicator');
+        
+        // Show recording indicator if app is recording
+        if (recordingIndicator && window.patTrailApp) {
+            recordingIndicator.style.display = window.patTrailApp.isRecording ? 'flex' : 'none';
+        }
+        
+        // Show offline indicator if not online
+        if (offlineIndicator) {
+            offlineIndicator.style.display = !navigator.onLine ? 'flex' : 'none';
+        }
+        
+        // Syncing indicator is managed by setSyncingIndicator
+    }
+
+    /**
+     * Initialize status indicators on app load
+     */
+    async initStatusIndicators() {
+        // Update last synced display
+        await this.updateLastSyncedDisplay();
+        
+        // Update status indicators
+        this.updateStatusIndicators();
+        
+        // Update queue status
+        await this.updateQueueStatus();
     }
 
     /**

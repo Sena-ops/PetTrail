@@ -20,6 +20,80 @@ html, body {
     z-index: 1000;
 }
 
+/* Status Indicators */
+.status-indicators {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-indicator {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 8px 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    animation: slideInRight 0.3s ease;
+}
+
+.status-indicator.recording {
+    color: #4CAF50;
+    border-left: 3px solid #4CAF50;
+}
+
+.status-indicator.offline {
+    color: #ff9800;
+    border-left: 3px solid #ff9800;
+}
+
+.status-indicator.syncing {
+    color: #2196F3;
+    border-left: 3px solid #2196F3;
+}
+
+.status-indicator.syncing .indicator-icon {
+    animation: spin 1s linear infinite;
+}
+
+.indicator-icon {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.indicator-text {
+    white-space: nowrap;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Recording Controls */
 .recording-controls {
     position: absolute;
@@ -52,6 +126,48 @@ html, body {
 .status-details {
     font-size: 14px;
     color: #666;
+    margin-bottom: 8px;
+}
+
+.last-synced {
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+}
+
+.pet-selection {
+    margin-bottom: 15px;
+}
+
+.pet-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.pet-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.pet-select:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.pet-select:disabled {
+    background: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
 }
 
 .button-group {

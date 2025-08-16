@@ -56,6 +56,9 @@ class PatTrailApp {
             // Initialize status indicators
             await this.networking.initStatusIndicators();
             
+            // Load pets for selection
+            await this.loadPets();
+            
             // Update initial status
             await this.updateStatus();
             
@@ -102,6 +105,7 @@ class PatTrailApp {
             // Update UI
             this.startBtn.disabled = true;
             this.stopBtn.disabled = false;
+            this.petSelect.disabled = true;
             this.updateStatus('Recording walk...');
             
             // Update status indicators
@@ -151,6 +155,7 @@ class PatTrailApp {
         this.recordingTime = document.getElementById('recording-time');
         this.summaryModal = document.getElementById('summary-modal');
         this.summaryContent = document.getElementById('summary-content');
+        this.petSelect = document.getElementById('pet-select');
         
         // Initialize modal close functionality
         const closeBtn = this.summaryModal.querySelector('.close');
@@ -204,16 +209,69 @@ class PatTrailApp {
         }
     }
 
+    async loadPets() {
+        try {
+            this.updateStatus('Loading pets...');
+            
+            const result = await this.networking.getPets();
+            
+            if (!result.success) {
+                throw new Error(result.error?.message || 'Failed to load pets');
+            }
+            
+            const pets = result.data;
+            
+            // Clear existing options
+            this.petSelect.innerHTML = '';
+            
+            if (pets.length === 0) {
+                // No pets available
+                this.petSelect.innerHTML = '<option value="">No pets available</option>';
+                this.petSelect.disabled = true;
+                this.startBtn.disabled = true;
+                this.showToast('warning', 'No Pets', 'No pets are available. Please add a pet first.');
+            } else {
+                // Add default option
+                this.petSelect.innerHTML = '<option value="">Select a pet...</option>';
+                
+                // Add pet options
+                pets.forEach(pet => {
+                    const option = document.createElement('option');
+                    option.value = pet.id;
+                    option.textContent = `${pet.name} (${pet.species})`;
+                    this.petSelect.appendChild(option);
+                });
+                
+                this.petSelect.disabled = false;
+                this.startBtn.disabled = false;
+            }
+            
+            this.updateStatus('Ready to record');
+            
+        } catch (error) {
+            console.error('Failed to load pets:', error);
+            this.petSelect.innerHTML = '<option value="">Failed to load pets</option>';
+            this.petSelect.disabled = true;
+            this.startBtn.disabled = true;
+            this.showToast('error', 'Load Failed', 'Failed to load pets. Please refresh the page.');
+            this.updateStatus('Failed to load pets');
+        }
+    }
+
     async startRecording() {
         try {
+            // Check if a pet is selected
+            const selectedPetId = this.petSelect.value;
+            if (!selectedPetId) {
+                this.showToast('error', 'No Pet Selected', 'Please select a pet to start recording.');
+                return;
+            }
+            
             this.startBtn.disabled = true;
             this.updateStatus('Starting walk...');
             
-            // For demo purposes, use pet ID 1 (you might want to add a pet selection UI)
-            const petId = 1;
-            
             // Call backend to start walk
-            const result = await this.networking.startWalk(petId);
+            const result = await this.networking.startWalk(selectedPetId);
             
             if (!result.success) {
                 throw new Error(result.error?.message || 'Failed to start walk');
@@ -248,6 +306,7 @@ class PatTrailApp {
             this.isRecording = true;
             this.startBtn.disabled = true;
             this.stopBtn.disabled = false;
+            this.petSelect.disabled = true;
             this.updateStatus('Recording walk...');
             
             // Update status indicators
@@ -429,6 +488,7 @@ class PatTrailApp {
             // Update UI
             this.startBtn.disabled = false;
             this.stopBtn.disabled = true;
+            this.petSelect.disabled = false;
             this.updateStatus('Ready to record');
             this.updatePointsCount();
             this.updateRecordingTime();
