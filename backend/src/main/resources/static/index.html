@@ -35,6 +35,36 @@
             <span class="indicator-icon">↻</span>
             <span class="indicator-text">Syncing</span>
         </div>
+        <div id="location-indicator" class="status-indicator location" style="display: none;">
+            <span class="indicator-icon">📍</span>
+            <span class="indicator-text">Locating...</span>
+        </div>
+    </div>
+    
+    <!-- Location Controls -->
+    <div id="location-controls" class="location-controls">
+        <div class="location-panel">
+            <div class="location-header">
+                <h3>My Location</h3>
+                <div id="location-status" class="location-status">Off</div>
+            </div>
+            
+            <div class="location-buttons">
+                <button id="locate-btn" class="btn btn-locate">
+                    <span class="btn-icon">📍</span>
+                    Locate Me
+                </button>
+                <button id="follow-btn" class="btn btn-follow" disabled>
+                    <span class="btn-icon">🎯</span>
+                    Follow Me
+                </button>
+            </div>
+            
+            <div id="location-error" class="location-error" style="display: none;">
+                <span class="error-icon">⚠</span>
+                <span class="error-text"></span>
+            </div>
+        </div>
     </div>
     
     <!-- Recording Controls -->

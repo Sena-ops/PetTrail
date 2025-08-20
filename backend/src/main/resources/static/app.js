@@ -4,6 +4,310 @@
  * Enhanced with offline support and state persistence
  */
 
+/**
+ * LocationController - Handles real-time location tracking with marker and accuracy circle
+ */
+class LocationController {
+    constructor(map) {
+        this.map = map;
+        this.isEnabled = false;
+        this.followMe = false;
+        this.watchId = null;
+        this.marker = null;
+        this.accuracyCircle = null;
+        this.lastAccuracy = null;
+        
+        // UI elements
+        this.locateBtn = null;
+        this.followBtn = null;
+        this.locationStatus = null;
+        this.locationError = null;
+        this.locationIndicator = null;
+        
+        // State persistence key
+        this.stateKey = 'pattrail_location_state';
+        
+        this.init();
+    }
+    
+    init() {
+        // Create Leaflet elements once
+        this.marker = L.marker([0, 0], { 
+            keyboard: false,
+            icon: L.divIcon({
+                className: 'location-marker',
+                html: '<div class="marker-pulse"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            })
+        });
+        
+        this.accuracyCircle = L.circle([0, 0], { 
+            radius: 0,
+            color: '#2196F3',
+            fillColor: '#2196F3',
+            fillOpacity: 0.2,
+            weight: 2
+        });
+        
+        // Restore state
+        this.restoreState();
+    }
+    
+    setUIElements(locateBtn, followBtn, locationStatus, locationError, locationIndicator) {
+        this.locateBtn = locateBtn;
+        this.followBtn = followBtn;
+        this.locationStatus = locationStatus;
+        this.locationError = locationError;
+        this.locationIndicator = locationIndicator;
+        
+        // Add event listeners
+        this.locateBtn.addEventListener('click', () => this.toggleLocate());
+        this.followBtn.addEventListener('click', () => this.toggleFollow());
+        
+        // Update UI based on current state
+        this.updateUI();
+    }
+    
+    async enableLocate() {
+        if (this.isEnabled) return;
+        
+        if (!navigator.geolocation) {
+            this.showError('Geolocation API not available in this browser.');
+            return;
+        }
+        
+        try {
+            this.updateStatus('Locating...');
+            this.showError(null);
+            
+            // Request permission and get initial position
+            const position = await this.getCurrentPosition();
+            
+            // Start watching position
+            this.watchId = navigator.geolocation.watchPosition(
+                (pos) => this.handlePositionUpdate(pos),
+                (error) => this.handlePositionError(error),
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 2000,
+                    timeout: 10000
+                }
+            );
+            
+            this.isEnabled = true;
+            this.updateStatus('Live');
+            this.saveState();
+            this.updateUI();
+            
+            console.log('Location tracking enabled');
+        } catch (error) {
+            this.handlePositionError(error);
+        }
+    }
+    
+    disableLocate() {
+        if (!this.isEnabled) return;
+        
+        if (this.watchId) {
+            navigator.geolocation.clearWatch(this.watchId);
+            this.watchId = null;
+        }
+        
+        this.isEnabled = false;
+        this.followMe = false;
+        this.updateStatus('Off');
+        this.saveState();
+        this.updateUI();
+        
+        // Remove marker and circle from map
+        if (this.marker) {
+            this.map.removeLayer(this.marker);
+        }
+        if (this.accuracyCircle) {
+            this.map.removeLayer(this.accuracyCircle);
+        }
+        
+        console.log('Location tracking disabled');
+    }
+    
+    setFollow(enabled) {
+        this.followMe = enabled;
+        this.saveState();
+        this.updateUI();
+    }
+    
+    toggleLocate() {
+        if (this.isEnabled) {
+            this.disableLocate();
+        } else {
+            this.enableLocate();
+        }
+    }
+    
+    toggleFollow() {
+        if (!this.isEnabled) return;
+        
+        this.setFollow(!this.followMe);
+    }
+    
+    getCurrentPosition() {
+        return new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        });
+    }
+    
+    handlePositionUpdate(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
+        
+        // De-jitter: ignore updates with accuracy > 100m unless no prior fix
+        if (accuracy > 100 && this.lastAccuracy !== null) {
+            console.log('Ignoring low accuracy position:', accuracy + 'm');
+            return;
+        }
+        
+        this.updateMarkerPosition(lat, lon, accuracy);
+        
+        if (this.followMe) {
+            this.map.setView([lat, lon], this.map.getZoom());
+        }
+        
+        // Notify app if recording
+        if (window.patTrailApp && window.patTrailApp.isRecording) {
+            this.onPositionUpdate(position);
+        }
+    }
+    
+    handlePositionError(error) {
+        console.error('Geolocation error:', error);
+        
+        let errorMessage = 'Unknown location error';
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage = 'Location permission denied. Please enable location access.';
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information unavailable.';
+                break;
+            case error.TIMEOUT:
+                errorMessage = 'Location request timed out.';
+                break;
+        }
+        
+        this.showError(errorMessage);
+        this.updateStatus('Error');
+        this.updateUI();
+    }
+    
+    updateMarkerPosition(lat, lon, accuracy) {
+        const latLng = [lat, lon];
+        
+        // Update marker position
+        this.marker.setLatLng(latLng);
+        
+        // Add to map if not already added
+        if (!this.map.hasLayer(this.marker)) {
+            this.marker.addTo(this.map);
+        }
+        
+        // Update accuracy circle
+        this.accuracyCircle.setLatLng(latLng).setRadius(accuracy);
+        
+        // Add to map if not already added
+        if (!this.map.hasLayer(this.accuracyCircle)) {
+            this.accuracyCircle.addTo(this.map);
+        }
+        
+        this.lastAccuracy = accuracy;
+    }
+    
+    updateStatus(status) {
+        if (this.locationStatus) {
+            this.locationStatus.textContent = status;
+            this.locationStatus.className = 'location-status ' + status.toLowerCase();
+        }
+        
+        if (this.locationIndicator) {
+            this.locationIndicator.style.display = status === 'Live' ? 'flex' : 'none';
+            if (status === 'Locating...') {
+                this.locationIndicator.style.display = 'flex';
+            }
+        }
+    }
+    
+    showError(message) {
+        const errorElement = this.locationError;
+        if (!errorElement) return;
+        
+        if (message) {
+            errorElement.querySelector('.error-text').textContent = message;
+            errorElement.style.display = 'flex';
+        } else {
+            errorElement.style.display = 'none';
+        }
+    }
+    
+    updateUI() {
+        if (this.locateBtn) {
+            this.locateBtn.classList.toggle('active', this.isEnabled);
+            this.locateBtn.textContent = this.isEnabled ? 'Stop Locating' : 'Locate Me';
+        }
+        
+        if (this.followBtn) {
+            this.followBtn.disabled = !this.isEnabled;
+            this.followBtn.classList.toggle('active', this.followMe);
+        }
+    }
+    
+    saveState() {
+        try {
+            const state = {
+                isEnabled: this.isEnabled,
+                followMe: this.followMe
+            };
+            localStorage.setItem(this.stateKey, JSON.stringify(state));
+        } catch (error) {
+            console.error('Error saving location state:', error);
+        }
+    }
+    
+    restoreState() {
+        try {
+            const saved = localStorage.getItem(this.stateKey);
+            if (saved) {
+                const state = JSON.parse(saved);
+                this.isEnabled = state.isEnabled || false;
+                this.followMe = state.followMe || false;
+            }
+        } catch (error) {
+            console.error('Error restoring location state:', error);
+        }
+    }
+    
+    onRecordingStart() {
+        // If location tracking is already enabled, reuse the watch
+        if (this.isEnabled && this.watchId) {
+            console.log('Reusing existing location watch for recording');
+        }
+    }
+    
+    onRecordingStop() {
+        // Keep location tracking active if it was enabled by user
+        console.log('Recording stopped, location tracking remains active');
+    }
+    
+    onPositionUpdate(position) {
+        // This method is called when recording is active
+        // The position is already handled by handlePositionUpdate
+    }
+}
+
 class PatTrailApp {
     constructor() {
         this.map = null;
@@ -29,6 +333,9 @@ class PatTrailApp {
         this.walkQueue = new WalkQueueDB();
         this.networking = new WalkNetworking();
         
+        // Location controller for real-time location tracking
+        this.locationController = null;
+        
         // Make available globally for debugging
         window.walkQueue = this.walkQueue;
         window.networking = this.networking;
@@ -38,34 +345,45 @@ class PatTrailApp {
 
     async init() {
         try {
-            // Initialize database
+            console.log('Starting PatTrail app initialization...');
+            
+            // Initialize database first
+            console.log('Initializing database...');
             await this.walkQueue.init();
             
             // Initialize map
+            console.log('Initializing map...');
             this.initMap();
             
             // Initialize UI
+            console.log('Initializing UI...');
             this.initUI();
             
             // Initialize event listeners
+            console.log('Initializing event listeners...');
             this.initEventListeners();
             
             // Restore app state from IndexedDB
+            console.log('Restoring app state...');
             await this.restoreAppState();
             
             // Initialize status indicators
+            console.log('Initializing status indicators...');
             await this.networking.initStatusIndicators();
             
             // Load pets for selection
+            console.log('Loading pets...');
             await this.loadPets();
             
             // Update initial status
+            console.log('Updating initial status...');
             await this.updateStatus();
             
             console.log('PatTrail app initialized successfully');
         } catch (error) {
             console.error('Failed to initialize app:', error);
-            this.showToast('error', 'Initialization Error', 'Failed to initialize the application.');
+            // Use a simple alert instead of showToast to avoid initialization issues
+            alert('Failed to initialize the application: ' + error.message);
         }
     }
 
@@ -82,6 +400,15 @@ class PatTrailApp {
                 if (this.isRecording) {
                     // Resume recording
                     await this.resumeRecording();
+                }
+            }
+            
+            // Restore location controller state if it was enabled
+            if (this.locationController) {
+                this.locationController.restoreState();
+                if (this.locationController.isEnabled) {
+                    console.log('Restoring location tracking state');
+                    // Don't auto-enable location tracking on restore, let user control it
                 }
             }
         } catch (error) {
@@ -125,48 +452,86 @@ class PatTrailApp {
     }
 
     initMap() {
-        // Create map instance centered on default coordinates
-        this.map = L.map('map').setView([0, 0], 2);
-        
-        // Add OpenStreetMap tile layer with proper attribution
-        const osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19,
-            subdomains: 'abc'
-        });
-        
-        // Add the tile layer to the map
-        osmTiles.addTo(this.map);
-        
-        // Add scale control
-        L.control.scale().addTo(this.map);
-        
-        console.log('Leaflet map initialized with OpenStreetMap tiles');
+        try {
+            // Create map instance centered on default coordinates
+            this.map = L.map('map').setView([0, 0], 2);
+            
+            // Add OpenStreetMap tile layer with proper attribution
+            const osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+                subdomains: 'abc'
+            });
+            
+            // Add the tile layer to the map
+            osmTiles.addTo(this.map);
+            
+            // Add scale control
+            L.control.scale().addTo(this.map);
+            
+            // Initialize location controller
+            this.locationController = new LocationController(this.map);
+            
+            console.log('Leaflet map initialized with OpenStreetMap tiles');
+        } catch (error) {
+            console.error('Error initializing map:', error);
+        }
     }
 
     initUI() {
-        // Get UI elements
-        this.startBtn = document.getElementById('start-btn');
-        this.stopBtn = document.getElementById('stop-btn');
-        this.statusText = document.getElementById('status-text');
-        this.statusDetails = document.getElementById('status-details');
-        this.pointsCount = document.getElementById('points-count');
-        this.queuedBatches = document.getElementById('queued-batches');
-        this.recordingTime = document.getElementById('recording-time');
-        this.summaryModal = document.getElementById('summary-modal');
-        this.summaryContent = document.getElementById('summary-content');
-        this.petSelect = document.getElementById('pet-select');
-        
-        // Initialize modal close functionality
-        const closeBtn = this.summaryModal.querySelector('.close');
-        closeBtn.onclick = () => this.hideSummaryModal();
-        
-        // Close modal when clicking outside
-        window.onclick = (event) => {
-            if (event.target === this.summaryModal) {
-                this.hideSummaryModal();
+        try {
+            console.log('Initializing UI...');
+            
+            // Get UI elements
+            this.startBtn = document.getElementById('start-btn');
+            this.stopBtn = document.getElementById('stop-btn');
+            this.statusText = document.getElementById('status-text');
+            this.statusDetails = document.getElementById('status-details');
+            this.pointsCount = document.getElementById('points-count');
+            this.queuedBatches = document.getElementById('queued-batches');
+            this.recordingTime = document.getElementById('recording-time');
+            this.summaryModal = document.getElementById('summary-modal');
+            this.summaryContent = document.getElementById('summary-content');
+            this.petSelect = document.getElementById('pet-select');
+            
+            // Get location control elements
+            const locateBtn = document.getElementById('locate-btn');
+            const followBtn = document.getElementById('follow-btn');
+            const locationStatus = document.getElementById('location-status');
+            const locationError = document.getElementById('location-error');
+            const locationIndicator = document.getElementById('location-indicator');
+            
+            console.log('Location elements found:', {
+                locateBtn: !!locateBtn,
+                followBtn: !!followBtn,
+                locationStatus: !!locationStatus,
+                locationError: !!locationError,
+                locationIndicator: !!locationIndicator
+            });
+            
+            // Set up location controller UI elements
+            if (this.locationController) {
+                console.log('Setting up location controller UI elements...');
+                this.locationController.setUIElements(locateBtn, followBtn, locationStatus, locationError, locationIndicator);
+            } else {
+                console.error('Location controller not initialized!');
             }
-        };
+            
+            // Initialize modal close functionality
+            const closeBtn = this.summaryModal.querySelector('.close');
+            closeBtn.onclick = () => this.hideSummaryModal();
+            
+            // Close modal when clicking outside
+            window.onclick = (event) => {
+                if (event.target === this.summaryModal) {
+                    this.hideSummaryModal();
+                }
+            };
+            
+            console.log('UI initialization complete');
+        } catch (error) {
+            console.error('Error initializing UI:', error);
+        }
     }
 
     initEventListeners() {
@@ -331,6 +696,14 @@ class PatTrailApp {
                 return;
             }
             
+            // Check if location controller is already watching
+            if (this.locationController && this.locationController.isEnabled) {
+                console.log('Reusing location controller watch for recording');
+                this.locationController.onRecordingStart();
+                setTimeout(resolve, 1000);
+                return;
+            }
+            
             this.geolocationId = navigator.geolocation.watchPosition(
                 (position) => this.handleGeolocationSuccess(position),
                 (error) => this.handleGeolocationError(error),
@@ -369,9 +742,9 @@ class PatTrailApp {
             this.flushBuffer();
         }
         
-        // Update map position (center on current location)
-        if (this.map) {
-            this.map.setView([point.lat, point.lon], this.map.getZoom());
+        // Update location controller if it's enabled
+        if (this.locationController && this.locationController.isEnabled) {
+            this.locationController.onPositionUpdate(position);
         }
         
         console.log('GPS point recorded:', point);
@@ -440,10 +813,15 @@ class PatTrailApp {
             this.stopBtn.disabled = true;
             this.updateStatus('Stopping walk...');
             
-            // Stop GPS tracking
-            if (this.geolocationId) {
+            // Stop GPS tracking (only if location controller is not enabled)
+            if (this.geolocationId && (!this.locationController || !this.locationController.isEnabled)) {
                 navigator.geolocation.clearWatch(this.geolocationId);
                 this.geolocationId = null;
+            }
+            
+            // Notify location controller
+            if (this.locationController) {
+                this.locationController.onRecordingStop();
             }
             
             // Stop timers
@@ -622,26 +1000,37 @@ class PatTrailApp {
     }
 
     showToast(type, title, message) {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        toast.innerHTML = `
-            <div class="toast-header">
-                <span class="toast-title">${title}</span>
-                <button class="toast-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
-            </div>
-            <div class="toast-message">${message}</div>
-        `;
-        
-        container.appendChild(toast);
-        
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            if (toast.parentElement) {
-                toast.remove();
+        try {
+            const container = document.getElementById('toast-container');
+            if (!container) {
+                console.warn('Toast container not found, using console instead');
+                console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
+                return;
             }
-        }, 5000);
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <span class="toast-title">${title}</span>
+                    <button class="toast-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+                </div>
+                <div class="toast-message">${message}</div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        } catch (error) {
+            console.error('Error showing toast:', error);
+            console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
+        }
     }
 }
 
@@ -654,5 +1043,11 @@ window.showToast = function(type, title, message) {
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    window.patTrailApp = new PatTrailApp();
+    console.log('DOM loaded, initializing PatTrail app...');
+    try {
+        window.patTrailApp = new PatTrailApp();
+    } catch (error) {
+        console.error('Failed to create PatTrail app:', error);
+        alert('Failed to create application: ' + error.message);
+    }
 });

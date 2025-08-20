@@ -225,6 +225,10 @@ class WalkNetworking {
      */
     async updateQueueStatus() {
         try {
+            if (!window.walkQueue) {
+                console.warn('WalkQueue not available yet');
+                return;
+            }
             const queueSize = await window.walkQueue.getQueueSize();
             const queuedElement = document.getElementById('queued-batches');
             if (queuedElement) {
@@ -243,6 +247,10 @@ class WalkNetworking {
      */
     async updateLastSyncedDisplay() {
         try {
+            if (!window.walkQueue) {
+                console.warn('WalkQueue not available yet');
+                return;
+            }
             const lastSynced = await window.walkQueue.getLastSynced();
             const lastSyncedElement = document.getElementById('last-synced');
             const lastSyncedTimeElement = document.getElementById('last-synced-time');

@@ -16,17 +16,17 @@ public class WebController {
 
     @GetMapping(value = {"/", "/web", "/web/"})
     public ResponseEntity<String> serveIndex() {
-        return serveFile("web/index.html");
+        return serveFile("static/index.html");
     }
 
     @GetMapping("/web/{filename}")
     public ResponseEntity<String> serveWebFile(@PathVariable String filename) {
-        return serveFile("web/" + filename);
+        return serveFile("static/" + filename);
     }
 
     @GetMapping("/web/{subdir}/{filename}")
     public ResponseEntity<String> serveWebSubdirFile(@PathVariable String subdir, @PathVariable String filename) {
-        return serveFile("web/" + subdir + "/" + filename);
+        return serveFile("static/" + subdir + "/" + filename);
     }
 
     private ResponseEntity<String> serveFile(String path) {
