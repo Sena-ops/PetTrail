@@ -1,4 +1,4 @@
-# PatTrail
+# PetTrail
 Rastreie os passeios do seu pet e conquiste badges
 
 ## PWA Frontend
