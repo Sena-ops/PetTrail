@@ -1,0 +1,23 @@
+{
+  "name": "PatTrail",
+  "short_name": "PatTrail",
+  "description": "Pet walk tracker with gamification",
+  "theme_color": "#ff7a00",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
