@@ -22,6 +22,8 @@ export const MapView = ({
   const markerRef = useRef<L.Marker | null>(null)
   const polylineRef = useRef<L.Polyline | null>(null)
   const [mapReady, setMapReady] = useState(false)
+  const [hasInitialLocation, setHasInitialLocation] = useState(false)
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true)
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return
@@ -60,11 +62,40 @@ export const MapView = ({
     markerRef.current = marker
     polylineRef.current = polyline
 
-    // Set initial view to a default location (can be updated when we get first position)
-    map.setView([0, 0], 13)
-
     setMapReady(true)
     onMapReady?.(map)
+
+    // Get user's location immediately when map loads
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latLng = L.latLng(position.coords.latitude, position.coords.longitude)
+          marker.setLatLng(latLng)
+          map.setView(latLng, 16)
+          setHasInitialLocation(true)
+          setIsLoadingLocation(false)
+        },
+        (error) => {
+          console.warn('Could not get initial location:', error)
+          // Fallback to a reasonable default (e.g., a major city)
+          const fallbackLocation = L.latLng(40.7128, -74.0060) // New York City
+          map.setView(fallbackLocation, 10)
+          setHasInitialLocation(true)
+          setIsLoadingLocation(false)
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      )
+    } else {
+      // Fallback if geolocation is not supported
+      const fallbackLocation = L.latLng(40.7128, -74.0060) // New York City
+      map.setView(fallbackLocation, 10)
+      setHasInitialLocation(true)
+      setIsLoadingLocation(false)
+    }
 
     return () => {
       map.remove()
@@ -81,11 +112,12 @@ export const MapView = ({
     const latLng = L.latLng(currentPosition.latitude, currentPosition.longitude)
     markerRef.current.setLatLng(latLng)
 
-    // Center map on first position
-    if (routePoints.length === 0) {
+    // Center map on first position if we haven't set initial location yet
+    if (!hasInitialLocation) {
       mapInstanceRef.current?.setView(latLng, 16)
+      setHasInitialLocation(true)
     }
-  }, [currentPosition, mapReady, routePoints.length])
+  }, [currentPosition, mapReady, hasInitialLocation])
 
   // Update route polyline
   useEffect(() => {
@@ -113,6 +145,35 @@ export const MapView = ({
       class={`map-container ${isFullscreen ? 'fullscreen' : ''}`}
       style={{ height: isFullscreen ? '100vh' : '400px' }}
     >
+      {isLoadingLocation && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 1000,
+          background: 'rgba(255, 255, 255, 0.9)',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '14px',
+          color: '#333'
+        }}>
+          <div style={{
+            width: '16px',
+            height: '16px',
+            border: '2px solid #2196F3',
+            borderTop: '2px solid transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+          Getting your location...
+        </div>
+      )}
+      
       {onToggleFullscreen && (
         <button
           onClick={onToggleFullscreen}
