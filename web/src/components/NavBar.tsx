@@ -16,6 +16,13 @@ export const NavBar = () => {
             Pets
           </a>
           <a 
+            class={`nav-link ${currentRoute === 'walks' ? 'active' : ''}`}
+            onClick={() => navigate('walks')}
+            href="#walks"
+          >
+            Walks
+          </a>
+          <a 
             class={`nav-link ${currentRoute === 'achievements' ? 'active' : ''}`}
             onClick={() => navigate('achievements')}
             href="#achievements"
