@@ -33,13 +33,11 @@ export interface WalkPointsBatchResponse {
 
 export interface WalkListItem {
   id: number
-  petId: number
-  petName: string
   startedAt: string
-  stoppedAt?: string
-  distance?: number
-  duration?: number
-  averagePace?: number
+  finishedAt?: string
+  distanciaM?: number
+  duracaoS?: number
+  velMediaKmh?: number
 }
 
 export interface WalksPageResponse {
@@ -49,6 +47,8 @@ export interface WalksPageResponse {
   currentPage: number
   size: number
 }
+
+export type GeoFeature = GeoJSON.Feature<GeoJSON.LineString>
 
 export const walksApi = {
   // Start a walk for a pet
@@ -69,5 +69,16 @@ export const walksApi = {
     
   // Get walk details
   getWalk: (walkId: number): Promise<WalkListItem> => 
-    http.get<WalkListItem>(`/walks/${walkId}`)
+    http.get<WalkListItem>(`/walks/${walkId}`),
+
+  // Get walk GeoJSON
+  fetchWalkGeoJSON: async (id: string): Promise<GeoFeature> => {
+    const res = await fetch(`/api/walks/${id}/geojson`, { headers: { Accept: 'application/json' } })
+    if (!res.ok) {
+      let msg = `Erro ao carregar rota (HTTP ${res.status})`
+      try { const err = await res.json(); msg = err?.message || msg; } catch {}
+      throw new Error(msg)
+    }
+    return res.json()
+  }
 }

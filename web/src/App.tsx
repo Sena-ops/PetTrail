@@ -3,6 +3,8 @@ import { NavBar } from './components/NavBar'
 import { PetsPage } from './components/PetsPage'
 import { AchievementsPage } from './components/AchievementsPage'
 import { MapWalkPage } from './components/MapWalkPage'
+import WalkDetails from './components/WalkDetails'
+import { WalksPage } from './components/WalksPage'
 
 const AppContent = () => {
   const { currentRoute } = useRouter()
@@ -15,6 +17,10 @@ const AppContent = () => {
         return <AchievementsPage />
       case 'map':
         return <MapWalkPage />
+      case 'walk-details':
+        return <WalkDetails />
+      case 'walks':
+        return <WalksPage />
       default:
         return <PetsPage />
     }

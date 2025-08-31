@@ -529,3 +529,103 @@ body {
     opacity: 1;
   }
 }
+
+.leaflet-control-attribution {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 2px 4px;
+}
+
+/* Leaflet map container styles */
+.leaflet-container {
+  font-family: inherit;
+}
+
+/* Map styles */
+#app .map { 
+  height: 60vh; 
+  border-radius: 12px; 
+}
+
+.status-msg { 
+  margin: 8px 0; 
+  font-size: .95rem; 
+  opacity: .9; 
+}
+
+/* Walks list */
+.walks-list {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.walk-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.walk-info {
+  flex: 1;
+}
+
+.walk-date {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-color);
+}
+
+.walk-metrics {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.walk-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: var(--text-light);
+  min-width: 120px;
+  text-align: center;
+}
