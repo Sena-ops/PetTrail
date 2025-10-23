@@ -27,13 +27,17 @@ replay_pid*
 # Build/output
 target/
 
-# Bancos locais (SQLite/H2) e locks
-backend/data/
-*.db
-*.db-shm
-*.db-wal
-*.mv.db
-*.trace.db
+# Local database files (PostgreSQL dumps, etc.)
+*.sql
+*.dump
+*.backup
 
 # Logs
 *.log
+
+# Environment variables (security)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

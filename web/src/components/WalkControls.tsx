@@ -229,6 +229,60 @@ export const WalkControls = ({
     }
   }
 
+  const handleForceStop = async () => {
+    if (!walkId) return
+
+    try {
+      onStatusChange?.('Force stopping walk...')
+      
+      // Stop GPS tracking
+      geoService.stopWatch()
+      setIsRecording(false)
+
+      // Try to sync any remaining queued batches
+      if (isOnline) {
+        try {
+          await syncQueuedBatches()
+        } catch (error) {
+          console.warn('Failed to sync batches during force stop:', error)
+        }
+      }
+
+      // Try to stop walk on server, but don't fail if it doesn't work
+      try {
+        await walksApi.stopWalk(walkId)
+      } catch (error) {
+        console.warn('Failed to stop walk on server during force stop:', error)
+      }
+      
+      // Clear queue
+      try {
+        await idbQueue.clearWalk(walkId)
+      } catch (error) {
+        console.warn('Failed to clear queue during force stop:', error)
+      }
+      setQueuedBatches(0)
+
+      // Reset state
+      setWalkId(null)
+      setStartTime(null)
+      setRecordingTime(0)
+      setPointsCount(0)
+
+      onStatusChange?.('Walk force stopped')
+    } catch (err) {
+      console.error('Error during force stop:', err)
+      // Even if there's an error, reset the local state
+      setWalkId(null)
+      setStartTime(null)
+      setRecordingTime(0)
+      setPointsCount(0)
+      setIsRecording(false)
+      geoService.stopWatch()
+      onStatusChange?.('Walk force stopped (with errors)')
+    }
+  }
+
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
@@ -298,6 +352,14 @@ export const WalkControls = ({
             disabled={!isRecording}
           >
             ⏹ Stop Recording
+          </button>
+          <button
+            class="btn btn-lg btn-warning"
+            onClick={handleForceStop}
+            disabled={!isRecording}
+            style="background-color: #ff9800;"
+          >
+            ⚠ Force Stop
           </button>
         </div>
 

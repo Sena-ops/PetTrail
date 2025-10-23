@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -280,5 +281,28 @@ public class WalkService {
                 .collect(Collectors.toList());
         
         return new WalkGeoJsonResponse(walkId, coordinates);
+    }
+
+    /**
+     * Get the active walk for a pet
+     * @param petId the pet ID
+     * @return StartWalkResponse with walk ID and start time, or null if no active walk
+     * @throws PetNotFoundException if pet doesn't exist
+     */
+    public StartWalkResponse getActiveWalk(Long petId) {
+        // Check if pet exists
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new PetNotFoundException("Pet not found with ID: " + petId));
+
+        // Find active walk for this pet
+        Optional<Walk> activeWalk = walkRepository.findActiveWalkByPetId(petId);
+        
+        if (activeWalk.isPresent()) {
+            Walk walk = activeWalk.get();
+            String startedAt = walk.getStartedAt().format(ISO_FORMATTER);
+            return new StartWalkResponse(walk.getId(), startedAt);
+        }
+        
+        return null; // No active walk found
     }
 }

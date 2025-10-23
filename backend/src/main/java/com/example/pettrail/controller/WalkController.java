@@ -117,6 +117,63 @@ public class WalkController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/active")
+    @Operation(
+        summary = "Get active walk for a pet",
+        description = "Get the currently active walk for the specified pet, if any exists."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Active walk found",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = StartWalkResponse.class),
+                examples = @ExampleObject(
+                    value = "{\"walkId\": 101, \"startedAt\": \"2025-08-14T22:15:30Z\"}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "No active walk found for this pet",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(ref = "#/components/schemas/ErrorResponse"),
+                examples = @ExampleObject(
+                    name = "No Active Walk",
+                    value = "{\"code\": \"NOT_FOUND\", \"message\": \"No active walk found for this pet\", \"details\": []}"
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(ref = "#/components/schemas/ErrorResponse"),
+                examples = @ExampleObject(
+                    name = "Internal Error",
+                    value = "{\"code\": \"INTERNAL_ERROR\", \"message\": \"An unexpected error occurred.\", \"details\": []}"
+                )
+            )
+        )
+    })
+    public ResponseEntity<StartWalkResponse> getActiveWalk(
+            @Parameter(
+                description = "ID of the pet to check for active walk",
+                required = true,
+                example = "42"
+            )
+            @RequestParam("petId") Long petId) {
+        
+        StartWalkResponse response = walkService.getActiveWalk(petId);
+        if (response == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{id}/points")
     @Operation(
         summary = "Upload walk points in batch",
