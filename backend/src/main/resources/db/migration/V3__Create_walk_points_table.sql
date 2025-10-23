@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS walk_points (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    walk_id INTEGER NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    walk_id BIGINT NOT NULL,
     latitude DECIMAL(10, 8) NOT NULL,
     longitude DECIMAL(11, 8) NOT NULL,
     timestamp TIMESTAMP NOT NULL,

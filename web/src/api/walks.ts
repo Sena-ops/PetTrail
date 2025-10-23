@@ -55,6 +55,15 @@ export const walksApi = {
   startWalk: (petId: number): Promise<StartWalkResponse> => 
     http.post<StartWalkResponse>(`/walks/start?petId=${petId}`),
     
+  // Get active walk for a pet (for recovery after page refresh)
+  getActiveWalk: (petId: number): Promise<StartWalkResponse | null> => 
+    http.get<StartWalkResponse>(`/walks/active?petId=${petId}`).catch(error => {
+      if (error.status === 404) {
+        return null; // No active walk found
+      }
+      throw error; // Re-throw other errors
+    }),
+    
   // Send GPS points for a walk
   sendPoints: (walkId: number, batch: WalkPointsBatchRequest): Promise<WalkPointsBatchResponse> => 
     http.post<WalkPointsBatchResponse>(`/walks/${walkId}/points`, batch),
