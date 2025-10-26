@@ -28,18 +28,18 @@ export async function composeAndShare(options: ShareOptions): Promise<void> {
     })
 
     // Create file for sharing
-    const file = new File([blob], 'pattrail-walk.png', { type: 'image/png' })
+    const file = new File([blob], 'pettrail-walk.png', { type: 'image/png' })
 
     // Try Web Share API first
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
-        title: 'My PatTrail Walk',
+        title: 'My PetTrail Walk',
         text: `Check out my walk with ${options.petName || 'my pet'}!`,
         files: [file]
       })
     } else {
       // Fallback to download
-      downloadImage(canvas, 'pattrail-walk.png')
+      downloadImage(canvas, 'pettrail-walk.png')
     }
   } catch (error) {
     console.error('Failed to share image:', error)
@@ -173,7 +173,7 @@ async function createShareImage(options: ShareOptions): Promise<HTMLCanvasElemen
     footerDiv.style.fontSize = '12px'
     footerDiv.style.color = '#999'
     footerDiv.innerHTML = `
-      <div style="font-weight: bold; color: #ff7a00;">PatTrail</div>
+      <div style="font-weight: bold; color: #ff7a00;">PetTrail</div>
       <div>Track your pet's adventures</div>
     `
     container.appendChild(footerDiv)

@@ -9,7 +9,7 @@ interface QueueItem {
   retryCount: number
 }
 
-interface PatTrailDB extends DBSchema {
+interface PetTrailDB extends DBSchema {
   walkQueue: {
     key: string
     value: QueueItem
@@ -18,14 +18,14 @@ interface PatTrailDB extends DBSchema {
 }
 
 class IDBQueue {
-  private db: IDBPDatabase<PatTrailDB> | null = null
-  private readonly DB_NAME = 'PatTrailDB'
+  private db: IDBPDatabase<PetTrailDB> | null = null
+  private readonly DB_NAME = 'PetTrailDB'
   private readonly DB_VERSION = 1
 
   async init(): Promise<void> {
     if (this.db) return
 
-    this.db = await openDB<PatTrailDB>(this.DB_NAME, this.DB_VERSION, {
+    this.db = await openDB<PetTrailDB>(this.DB_NAME, this.DB_VERSION, {
       upgrade(db) {
         const queueStore = db.createObjectStore('walkQueue', { keyPath: 'id' })
         queueStore.createIndex('by-walkId', 'walkId')

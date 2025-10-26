@@ -13,7 +13,7 @@ export const NavBar = () => {
   return (
     <nav class="nav-bar">
       <div class="nav-content">
-        <div class="nav-title">🐾 PatTrail</div>
+        <div class="nav-title">🐾 PetTrail</div>
         <div class="nav-links">
           <a 
             class={`nav-link ${currentRoute === 'pets' ? 'active' : ''}`}
