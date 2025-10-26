@@ -14,13 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class WalkPointsService {
@@ -51,7 +49,7 @@ public class WalkPointsService {
      * @throws WalkFinishedException if walk is already finished
      */
     @Transactional
-    public WalkPointsBatchResponse ingestPoints(Long walkId, List<WalkPointRequest> points) {
+    public WalkPointsBatchResponse ingestPoints(UUID walkId, List<WalkPointRequest> points) {
         // Validate walk exists and is active
         Walk walk = walkRepository.findById(walkId)
                 .orElseThrow(() -> new WalkNotFoundException("Walk not found with ID: " + walkId));
@@ -108,7 +106,7 @@ public class WalkPointsService {
             if (shouldAccept) {
                 // Convert to entity and add to save list
                 WalkPoint walkPoint = new WalkPoint(
-                        walkId,
+                        UUID.fromString(walkId.toString()),
                         currentPoint.getLat(),
                         currentPoint.getLon(),
                         currentPoint.getTs(),

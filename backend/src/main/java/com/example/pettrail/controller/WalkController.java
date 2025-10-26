@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/walks")
@@ -111,7 +112,7 @@ public class WalkController {
                 required = true,
                 example = "42"
             )
-            @RequestParam("petId") Long petId) {
+            @RequestParam("petId") UUID petId) {
         
         StartWalkResponse response = walkService.startWalk(petId);
         return ResponseEntity.ok(response);
@@ -165,7 +166,7 @@ public class WalkController {
                 required = true,
                 example = "42"
             )
-            @RequestParam("petId") Long petId) {
+            @RequestParam("petId") UUID petId) {
         
         StartWalkResponse response = walkService.getActiveWalk(petId);
         if (response == null) {
@@ -246,7 +247,7 @@ public class WalkController {
                 required = true,
                 example = "123"
             )
-            @PathVariable("id") Long walkId,
+            @PathVariable("id") UUID walkId,
             @Parameter(
                 description = "Array of GPS points (1-5000 points). Coordinates must be WGS84 lat/lon in degrees.",
                 required = true
@@ -317,7 +318,7 @@ public class WalkController {
                 required = true,
                 example = "123"
             )
-            @PathVariable("id") Long walkId) {
+            @PathVariable("id") UUID walkId) {
         
         StopWalkResponse response = walkService.stopWalk(walkId);
         return ResponseEntity.ok(response);
@@ -383,7 +384,7 @@ public class WalkController {
                 required = true,
                 example = "42"
             )
-            @RequestParam("petId") Long petId,
+            @RequestParam("petId") UUID petId,
             @Parameter(
                 description = "Page number (zero-based, default: 0)",
                 example = "0"
@@ -462,7 +463,7 @@ public class WalkController {
                 required = true,
                 example = "123"
             )
-            @PathVariable("id") Long walkId) {
+            @PathVariable("id") UUID walkId) {
         
         WalkGeoJsonResponse response = walkService.getGeoJson(walkId);
         return ResponseEntity.ok(response);

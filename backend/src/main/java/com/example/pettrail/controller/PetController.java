@@ -2,9 +2,10 @@ package com.example.pettrail.controller;
 
 import com.example.pettrail.dto.CriarPetRequest;
 import com.example.pettrail.dto.AtualizarPetRequest;
-import com.example.pettrail.dto.ErrorResponse;
 import com.example.pettrail.model.Pet;
+import com.example.pettrail.model.User;
 import com.example.pettrail.repository.PetRepository;
+import com.example.pettrail.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pets")
@@ -29,6 +32,9 @@ public class PetController {
 
     @Autowired
     private PetRepository petRepository;
+
+    @Autowired
+    private AuthService authService;
 
     @GetMapping
     @Operation(
@@ -45,8 +51,10 @@ public class PetController {
             )
         )
     })
-    public ResponseEntity<List<Pet>> listPets() {
-        List<Pet> pets = petRepository.findAll();
+    public ResponseEntity<List<Pet>> listPets(HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+        User currentUser = authService.getCurrentUser(token);
+        List<Pet> pets = petRepository.findByUserId(currentUser.getId());
         return ResponseEntity.ok(pets);
     }
 
@@ -125,9 +133,12 @@ public class PetController {
     })
     public ResponseEntity<Pet> getPetById(
         @Parameter(description = "ID of the pet to retrieve", required = true)
-        @PathVariable Long id
+        @PathVariable UUID id,
+        HttpServletRequest request
     ) {
-        Optional<Pet> pet = petRepository.findById(id);
+        String token = extractTokenFromRequest(request);
+        User currentUser = authService.getCurrentUser(token);
+        Optional<Pet> pet = petRepository.findByIdAndUserId(id, currentUser.getId());
         if (pet.isPresent()) {
             return ResponseEntity.ok(pet.get());
         } else {
@@ -191,9 +202,13 @@ public class PetController {
     })
     public ResponseEntity<Pet> createPet(
         @Parameter(description = "Pet data to create", required = true)
-        @Valid @RequestBody CriarPetRequest request
+        @Valid @RequestBody CriarPetRequest request,
+        HttpServletRequest httpRequest
     ) {
+        String token = extractTokenFromRequest(httpRequest);
+        User currentUser = authService.getCurrentUser(token);
         Pet pet = new Pet(request.getName(), request.getSpecies(), request.getAge(), request.getRace());
+        pet.setUser(currentUser);
         Pet savedPet = petRepository.save(pet);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedPet);
     }
@@ -273,11 +288,14 @@ public class PetController {
     })
     public ResponseEntity<Pet> updatePet(
         @Parameter(description = "ID of the pet to update", required = true)
-        @PathVariable Long id,
+        @PathVariable UUID id,
         @Parameter(description = "Pet data to update", required = true)
-        @Valid @RequestBody AtualizarPetRequest request
+        @Valid @RequestBody AtualizarPetRequest request,
+        HttpServletRequest httpRequest
     ) {
-        Optional<Pet> existingPet = petRepository.findById(id);
+        String token = extractTokenFromRequest(httpRequest);
+        User currentUser = authService.getCurrentUser(token);
+        Optional<Pet> existingPet = petRepository.findByIdAndUserId(id, currentUser.getId());
         if (existingPet.isPresent()) {
             Pet pet = existingPet.get();
             
@@ -352,14 +370,25 @@ public class PetController {
     })
     public ResponseEntity<Void> deletePet(
         @Parameter(description = "ID of the pet to delete", required = true)
-        @PathVariable Long id
+        @PathVariable UUID id,
+        HttpServletRequest request
     ) {
-        Optional<Pet> pet = petRepository.findById(id);
+        String token = extractTokenFromRequest(request);
+        User currentUser = authService.getCurrentUser(token);
+        Optional<Pet> pet = petRepository.findByIdAndUserId(id, currentUser.getId());
         if (pet.isPresent()) {
             petRepository.deleteById(id);
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        throw new RuntimeException("No valid token found");
     }
 }

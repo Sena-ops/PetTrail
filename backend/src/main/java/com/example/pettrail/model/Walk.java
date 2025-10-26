@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "walks")
@@ -12,14 +13,14 @@ import java.time.LocalDateTime;
 public class Walk {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "Unique ID of the walk", example = "1")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Schema(description = "Unique ID of the walk", example = "550e8400-e29b-41d4-a716-446655440000")
+    private UUID id;
 
     @NotNull(message = "Pet ID is required")
     @Column(name = "pet_id", nullable = false)
-    @Schema(description = "ID of the pet", example = "1", required = true)
-    private Long petId;
+    @Schema(description = "ID of the pet", example = "550e8400-e29b-41d4-a716-446655440000", required = true)
+    private UUID petId;
 
     @NotNull(message = "Start time is required")
     @Column(name = "started_at", nullable = false)
@@ -45,7 +46,7 @@ public class Walk {
     // Constructors
     public Walk() {}
 
-    public Walk(Long petId, LocalDateTime startedAt) {
+    public Walk(UUID petId, LocalDateTime startedAt) {
         this.petId = petId;
         this.startedAt = startedAt;
         this.finishedAt = null;
@@ -54,7 +55,7 @@ public class Walk {
         this.velMediaKmh = null;
     }
 
-    public Walk(Long petId, LocalDateTime startedAt, LocalDateTime finishedAt) {
+    public Walk(UUID petId, LocalDateTime startedAt, LocalDateTime finishedAt) {
         this.petId = petId;
         this.startedAt = startedAt;
         this.finishedAt = finishedAt;
@@ -64,19 +65,19 @@ public class Walk {
     }
 
     // Getters and Setters
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public Long getPetId() {
+    public UUID getPetId() {
         return petId;
     }
 
-    public void setPetId(Long petId) {
+    public void setPetId(UUID petId) {
         this.petId = petId;
     }
 

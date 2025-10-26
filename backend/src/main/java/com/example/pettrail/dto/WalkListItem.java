@@ -3,12 +3,13 @@ package com.example.pettrail.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Schema(description = "Walk item in paginated list response")
 public class WalkListItem {
 
-    @Schema(description = "Unique ID of the walk", example = "1")
-    private Long id;
+    @Schema(description = "Unique ID of the walk", example = "550e8400-e29b-41d4-a716-446655440000")
+    private UUID id;
 
     @Schema(description = "When the walk started", example = "2025-08-13T23:15:00Z")
     private LocalDateTime startedAt;
@@ -28,7 +29,7 @@ public class WalkListItem {
     // Constructors
     public WalkListItem() {}
 
-    public WalkListItem(Long id, LocalDateTime startedAt, LocalDateTime finishedAt, 
+    public WalkListItem(UUID id, LocalDateTime startedAt, LocalDateTime finishedAt, 
                        Double distanciaM, Integer duracaoS, Double velMediaKmh) {
         this.id = id;
         this.startedAt = startedAt;
@@ -39,11 +40,11 @@ public class WalkListItem {
     }
 
     // Getters and Setters
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

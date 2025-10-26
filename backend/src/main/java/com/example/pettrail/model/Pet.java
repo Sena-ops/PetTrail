@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "pets")
@@ -17,9 +18,9 @@ import java.time.LocalDateTime;
 public class Pet {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "Unique ID of the pet", example = "1")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Schema(description = "Unique ID of the pet", example = "550e8400-e29b-41d4-a716-446655440000")
+    private UUID id;
 
     @NotBlank(message = "Name is required")
     @Size(min = 1, max = 60, message = "Name must be between 1 and 60 characters")
@@ -46,6 +47,11 @@ public class Pet {
     @Schema(description = "Race/breed of the pet", example = "Golden Retriever", required = true, maxLength = 50)
     private String race;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @Schema(description = "User who owns this pet")
+    private User user;
+
     @Column(name = "created_at")
     @Schema(description = "Creation timestamp of the pet")
     private LocalDateTime createdAt;
@@ -66,11 +72,11 @@ public class Pet {
     }
 
     // Getters and Setters
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -112,5 +118,13 @@ public class Pet {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

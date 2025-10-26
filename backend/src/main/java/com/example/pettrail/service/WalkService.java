@@ -9,7 +9,6 @@ import com.example.pettrail.exception.PetNotFoundException;
 import com.example.pettrail.exception.ActiveWalkExistsException;
 import com.example.pettrail.exception.WalkNotFoundException;
 import com.example.pettrail.exception.WalkFinishedException;
-import com.example.pettrail.model.Pet;
 import com.example.pettrail.model.Walk;
 import com.example.pettrail.model.WalkPoint;
 import com.example.pettrail.repository.PetRepository;
@@ -31,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -61,10 +61,11 @@ public class WalkService {
      * @throws ActiveWalkExistsException if pet already has an active walk
      */
     @Transactional
-    public StartWalkResponse startWalk(Long petId) {
+    public StartWalkResponse startWalk(UUID petId) {
         // Check if pet exists
-        Pet pet = petRepository.findById(petId)
-                .orElseThrow(() -> new PetNotFoundException("Pet not found with ID: " + petId));
+        if (!petRepository.existsById(petId)) {
+            throw new PetNotFoundException("Pet not found with ID: " + petId);
+        }
 
         // Check if there's already an active walk for this pet
         if (walkRepository.existsActiveWalkByPetId(petId)) {
@@ -89,7 +90,7 @@ public class WalkService {
      * @throws WalkFinishedException if walk is already finished
      */
     @Transactional
-    public StopWalkResponse stopWalk(Long walkId) {
+    public StopWalkResponse stopWalk(UUID walkId) {
         // Find the walk
         Walk walk = walkRepository.findById(walkId)
                 .orElseThrow(() -> new WalkNotFoundException("Walk not found with ID: " + walkId));
@@ -100,7 +101,7 @@ public class WalkService {
         }
 
         // Get all accepted points for the walk (ordered by timestamp)
-        List<WalkPoint> points = walkPointRepository.findByWalkIdOrderByTimestamp(walkId);
+        List<WalkPoint> points = walkPointRepository.findByWalkIdOrderByTimestamp(UUID.fromString(walkId.toString()));
         
         // Calculate total distance using Haversine formula
         double totalDistanceM = calculateTotalDistance(points);
@@ -223,7 +224,7 @@ public class WalkService {
      * @throws PetNotFoundException if pet doesn't exist
      */
     @Transactional(readOnly = true)
-    public WalksPageResponse listByPet(Long petId, int page, int size) {
+    public WalksPageResponse listByPet(UUID petId, int page, int size) {
         // Check if pet exists
         if (!petRepository.existsById(petId)) {
             throw new PetNotFoundException("Pet not found with ID: " + petId);
@@ -263,7 +264,7 @@ public class WalkService {
      * @throws WalkNotFoundException if walk doesn't exist
      */
     @Transactional(readOnly = true)
-    public WalkGeoJsonResponse getGeoJson(Long walkId) {
+    public WalkGeoJsonResponse getGeoJson(UUID walkId) {
         // Check if walk exists
         if (!walkRepository.existsById(walkId)) {
             throw new WalkNotFoundException("Walk not found with ID: " + walkId);
@@ -289,10 +290,11 @@ public class WalkService {
      * @return StartWalkResponse with walk ID and start time, or null if no active walk
      * @throws PetNotFoundException if pet doesn't exist
      */
-    public StartWalkResponse getActiveWalk(Long petId) {
+    public StartWalkResponse getActiveWalk(UUID petId) {
         // Check if pet exists
-        Pet pet = petRepository.findById(petId)
-                .orElseThrow(() -> new PetNotFoundException("Pet not found with ID: " + petId));
+        if (!petRepository.existsById(petId)) {
+            throw new PetNotFoundException("Pet not found with ID: " + petId);
+        }
 
         // Find active walk for this pet
         Optional<Walk> activeWalk = walkRepository.findActiveWalkByPetId(petId);
