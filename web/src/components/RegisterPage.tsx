@@ -50,10 +50,10 @@ export function RegisterPage({ onRegister, onSwitchToLogin }: RegisterPageProps)
         <div class="auth-header">
           <div class="auth-logo">
             <div class="paw-prints">
-              <div class="paw-print paw-print-1"></div>
-              <div class="paw-print paw-print-2"></div>
+              <span class="paw-print paw-print-1">🐾</span>
+              <span class="paw-print paw-print-2">🐾</span>
             </div>
-            <h1 class="auth-title">PatTrail</h1>
+            <h1 class="auth-title">PetTrail</h1>
           </div>
           <h2 class="auth-subtitle">Join the adventure!</h2>
           <p class="auth-description">

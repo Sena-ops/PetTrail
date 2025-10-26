@@ -168,35 +168,9 @@ body {
 }
 
 .paw-print {
-  width: 24px;
-  height: 24px;
-  background: #5C3A7E;
-  border-radius: 50%;
-  position: relative;
-}
-
-.paw-print::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
-  background: #5C3A7E;
-  border-radius: 50%;
-}
-
-.paw-print::after {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background: #5C3A7E;
-  border-radius: 50%;
+  font-size: 24px;
+  display: inline-block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .paw-print-1 {
@@ -205,7 +179,7 @@ body {
 
 .paw-print-2 {
   transform: rotate(15deg);
-  margin-left: -4px;
+  margin-left: -6px;
 }
 
 .auth-title {
@@ -280,16 +254,17 @@ body {
 
 .input-icon {
   position: absolute;
-  left: var(--spacing-md);
+  left: 18px;
   width: 20px;
   height: 20px;
   color: var(--text-light);
-  z-index: 1;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .form-input {
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 48px;
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 56px;
   border: 2px solid #e5e7eb;
   border-radius: var(--border-radius);
   font-size: 1rem;
@@ -509,21 +484,6 @@ body {
   margin-bottom: var(--spacing-xs);
   font-weight: 500;
   color: var(--text-color);
-}
-
-.form-input {
-  width: 100%;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  transition: border-color 0.2s ease;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1);
 }
 
 .form-select {
