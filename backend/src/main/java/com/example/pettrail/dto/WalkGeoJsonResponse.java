@@ -2,6 +2,7 @@ package com.example.pettrail.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
+import java.util.UUID;
 
 @Schema(description = "GeoJSON Feature representing a walk route as a LineString")
 public class WalkGeoJsonResponse {
@@ -18,7 +19,7 @@ public class WalkGeoJsonResponse {
     // Constructors
     public WalkGeoJsonResponse() {}
 
-    public WalkGeoJsonResponse(Long walkId, List<List<Double>> coordinates) {
+    public WalkGeoJsonResponse(UUID walkId, List<List<Double>> coordinates) {
         this.geometry = new Geometry(coordinates);
         this.properties = new Properties(walkId);
     }
@@ -84,22 +85,22 @@ public class WalkGeoJsonResponse {
 
     @Schema(description = "GeoJSON properties object")
     public static class Properties {
-        @Schema(description = "ID of the walk", example = "123", required = true)
-        private Long walkId;
+        @Schema(description = "ID of the walk", example = "550e8400-e29b-41d4-a716-446655440000", required = true)
+        private UUID walkId;
 
         // Constructors
         public Properties() {}
 
-        public Properties(Long walkId) {
+        public Properties(UUID walkId) {
             this.walkId = walkId;
         }
 
         // Getters and Setters
-        public Long getWalkId() {
+        public UUID getWalkId() {
             return walkId;
         }
 
-        public void setWalkId(Long walkId) {
+        public void setWalkId(UUID walkId) {
             this.walkId = walkId;
         }
     }

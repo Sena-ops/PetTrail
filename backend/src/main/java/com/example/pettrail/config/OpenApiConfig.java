@@ -2,7 +2,6 @@ package com.example.pettrail.config;
 
 import com.example.pettrail.dto.ErrorResponse;
 import com.example.pettrail.dto.ValidationError;
-import com.example.pettrail.enums.ErrorCode;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;

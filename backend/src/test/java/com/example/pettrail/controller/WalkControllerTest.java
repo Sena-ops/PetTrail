@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -30,6 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class WalkControllerTest {
+
+    private static final UUID TEST_PET_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+    private static final UUID TEST_WALK_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
 
     @Mock
     private WalkService walkService;
@@ -54,16 +58,16 @@ class WalkControllerTest {
     @Test
     void listWalksByPet_Success() throws Exception {
         // Arrange
-        Long petId = 42L;
+        UUID petId = TEST_PET_ID;
         LocalDateTime startedAt = LocalDateTime.of(2025, 8, 13, 23, 15, 0);
         LocalDateTime finishedAt = LocalDateTime.of(2025, 8, 13, 23, 41, 0);
         
-        WalkListItem walkItem = new WalkListItem(101L, startedAt, finishedAt, 2450.7, 1560, 5.65);
+        WalkListItem walkItem = new WalkListItem(UUID.fromString("101"), startedAt, finishedAt, 2450.7, 1560, 5.65);
         WalksPageResponse expectedResponse = new WalksPageResponse(
                 Arrays.asList(walkItem), 0, 10, 3, 21L
         );
         
-        when(walkService.listByPet(petId, 0, 10)).thenReturn(expectedResponse);
+        when(walkService.listByPet(UUID.fromString("101"), 0, 10)).thenReturn(expectedResponse);
 
         // Act & Assert
         mockMvc.perform(get("/api/walks")
@@ -88,12 +92,12 @@ class WalkControllerTest {
     @Test
     void listWalksByPet_WithDefaults() throws Exception {
         // Arrange
-        Long petId = 42L;
+        UUID petId = TEST_PET_ID;
         WalksPageResponse expectedResponse = new WalksPageResponse(
                 Arrays.asList(), 0, 10, 0, 0L
         );
         
-        when(walkService.listByPet(petId, 0, 10)).thenReturn(expectedResponse);
+        when(walkService.listByPet(UUID.fromString("101"), 0, 10)).thenReturn(expectedResponse);
 
         // Act & Assert
         mockMvc.perform(get("/api/walks")
@@ -108,7 +112,7 @@ class WalkControllerTest {
     void listWalksByPet_PetNotFound() throws Exception {
         // Arrange
         Long petId = 999L;
-        when(walkService.listByPet(petId, 0, 10))
+        when(walkService.listByPet(UUID.fromString("101"), 0, 10))
                 .thenThrow(new PetNotFoundException("Pet not found with ID: " + petId));
 
         // Act & Assert
@@ -192,16 +196,16 @@ class WalkControllerTest {
     @Test
     void getWalkGeoJson_Success() throws Exception {
         // Arrange
-        Long walkId = 123L;
+        UUID walkId = TEST_WALK_ID;
         WalkGeoJsonResponse expectedResponse = new WalkGeoJsonResponse(
-                walkId, 
+                UUID.fromString("101"), 
                 Arrays.asList(
                         Arrays.asList(-46.6333, -23.5505),
                         Arrays.asList(-46.6339, -23.5510)
                 )
         );
         
-        when(walkService.getGeoJson(walkId)).thenReturn(expectedResponse);
+        when(walkService.getGeoJson(UUID.fromString("101"))).thenReturn(expectedResponse);
 
         // Act & Assert
         mockMvc.perform(get("/api/walks/123/geojson")
@@ -220,10 +224,10 @@ class WalkControllerTest {
     @Test
     void getWalkGeoJson_EmptyRoute() throws Exception {
         // Arrange
-        Long walkId = 123L;
-        WalkGeoJsonResponse expectedResponse = new WalkGeoJsonResponse(walkId, Arrays.asList());
+        UUID walkId = TEST_WALK_ID;
+        WalkGeoJsonResponse expectedResponse = new WalkGeoJsonResponse(UUID.fromString("101"), Arrays.asList());
         
-        when(walkService.getGeoJson(walkId)).thenReturn(expectedResponse);
+        when(walkService.getGeoJson(UUID.fromString("101"))).thenReturn(expectedResponse);
 
         // Act & Assert
         mockMvc.perform(get("/api/walks/123/geojson")
@@ -240,7 +244,7 @@ class WalkControllerTest {
     void getWalkGeoJson_WalkNotFound() throws Exception {
         // Arrange
         Long walkId = 999L;
-        when(walkService.getGeoJson(walkId))
+        when(walkService.getGeoJson(UUID.fromString("101")))
                 .thenThrow(new WalkNotFoundException("Walk not found with ID: " + walkId));
 
         // Act & Assert

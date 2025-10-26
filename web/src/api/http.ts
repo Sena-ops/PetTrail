@@ -1,3 +1,5 @@
+import { authService } from './auth'
+
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 interface ApiError {
@@ -27,6 +29,7 @@ async function request<T>(
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
+      ...authService.getAuthHeaders(),
       ...options.headers,
     },
     ...options,

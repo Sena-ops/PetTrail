@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "walk_points")
@@ -15,14 +16,14 @@ import java.time.LocalDateTime;
 public class WalkPoint {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "Unique ID of the walk point", example = "1")
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Schema(description = "Unique ID of the walk point", example = "550e8400-e29b-41d4-a716-446655440000")
+    private UUID id;
 
     @NotNull(message = "Walk ID is required")
     @Column(name = "walk_id", nullable = false)
-    @Schema(description = "ID of the walk this point belongs to", example = "1", required = true)
-    private Long walkId;
+    @Schema(description = "ID of the walk this point belongs to", example = "550e8400-e29b-41d4-a716-446655440000", required = true)
+    private UUID walkId;
 
     @NotNull(message = "Latitude is required")
     @DecimalMin(value = "-90.0", message = "Latitude must be between -90 and 90 degrees")
@@ -56,7 +57,7 @@ public class WalkPoint {
         this.createdAt = LocalDateTime.now();
     }
 
-    public WalkPoint(Long walkId, BigDecimal latitude, BigDecimal longitude, LocalDateTime timestamp) {
+    public WalkPoint(UUID walkId, BigDecimal latitude, BigDecimal longitude, LocalDateTime timestamp) {
         this();
         this.walkId = walkId;
         this.latitude = latitude;
@@ -64,25 +65,25 @@ public class WalkPoint {
         this.timestamp = timestamp;
     }
 
-    public WalkPoint(Long walkId, BigDecimal latitude, BigDecimal longitude, LocalDateTime timestamp, BigDecimal elevation) {
+    public WalkPoint(UUID walkId, BigDecimal latitude, BigDecimal longitude, LocalDateTime timestamp, BigDecimal elevation) {
         this(walkId, latitude, longitude, timestamp);
         this.elevation = elevation;
     }
 
     // Getters and Setters
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public Long getWalkId() {
+    public UUID getWalkId() {
         return walkId;
     }
 
-    public void setWalkId(Long walkId) {
+    public void setWalkId(UUID walkId) {
         this.walkId = walkId;
     }
 

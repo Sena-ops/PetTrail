@@ -3,7 +3,6 @@ package com.example.pettrail.exception;
 import com.example.pettrail.dto.ErrorResponse;
 import com.example.pettrail.dto.ValidationError;
 import com.example.pettrail.enums.ErrorCode;
-import com.example.pettrail.validation.ValidWalkPointsArray;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

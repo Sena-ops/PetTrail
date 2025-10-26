@@ -3,12 +3,13 @@ package com.example.pettrail.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Schema(description = "Response for stopping a walk with consolidated metrics")
 public class StopWalkResponse {
 
-    @Schema(description = "ID of the walk", example = "123", required = true)
-    private Long walkId;
+    @Schema(description = "ID of the walk", example = "550e8400-e29b-41d4-a716-446655440000", required = true)
+    private UUID walkId;
 
     @Schema(description = "Total distance in meters", example = "2450.7", required = true)
     private Double distanciaM;
@@ -28,7 +29,7 @@ public class StopWalkResponse {
     // Constructors
     public StopWalkResponse() {}
 
-    public StopWalkResponse(Long walkId, Double distanciaM, Integer duracaoS, Double velMediaKmh, 
+    public StopWalkResponse(UUID walkId, Double distanciaM, Integer duracaoS, Double velMediaKmh, 
                            LocalDateTime startedAt, LocalDateTime finishedAt) {
         this.walkId = walkId;
         this.distanciaM = distanciaM;
@@ -39,11 +40,11 @@ public class StopWalkResponse {
     }
 
     // Getters and Setters
-    public Long getWalkId() {
+    public UUID getWalkId() {
         return walkId;
     }
 
-    public void setWalkId(Long walkId) {
+    public void setWalkId(UUID walkId) {
         this.walkId = walkId;
     }
 

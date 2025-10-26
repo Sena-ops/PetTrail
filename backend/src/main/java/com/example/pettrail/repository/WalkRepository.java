@@ -9,9 +9,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface WalkRepository extends JpaRepository<Walk, Long> {
+public interface WalkRepository extends JpaRepository<Walk, UUID> {
     
     /**
      * Find an active walk for a specific pet
@@ -19,7 +20,7 @@ public interface WalkRepository extends JpaRepository<Walk, Long> {
      * @return Optional containing the active walk if exists
      */
     @Query("SELECT w FROM Walk w WHERE w.petId = :petId AND w.finishedAt IS NULL")
-    Optional<Walk> findActiveWalkByPetId(@Param("petId") Long petId);
+    Optional<Walk> findActiveWalkByPetId(@Param("petId") UUID petId);
     
     /**
      * Check if an active walk exists for a specific pet
@@ -27,7 +28,7 @@ public interface WalkRepository extends JpaRepository<Walk, Long> {
      * @return true if an active walk exists, false otherwise
      */
     @Query("SELECT COUNT(w) > 0 FROM Walk w WHERE w.petId = :petId AND w.finishedAt IS NULL")
-    boolean existsActiveWalkByPetId(@Param("petId") Long petId);
+    boolean existsActiveWalkByPetId(@Param("petId") UUID petId);
     
     /**
      * Find all walks for a specific pet, ordered by start time descending
@@ -36,7 +37,7 @@ public interface WalkRepository extends JpaRepository<Walk, Long> {
      * @return Page of walks
      */
     @Query("SELECT w FROM Walk w WHERE w.petId = :petId ORDER BY w.startedAt DESC")
-    Page<Walk> findByPetIdOrderByStartedAtDesc(@Param("petId") Long petId, Pageable pageable);
+    Page<Walk> findByPetIdOrderByStartedAtDesc(@Param("petId") UUID petId, Pageable pageable);
     
     /**
      * Count total walks for a specific pet
@@ -44,5 +45,5 @@ public interface WalkRepository extends JpaRepository<Walk, Long> {
      * @return total number of walks
      */
     @Query("SELECT COUNT(w) FROM Walk w WHERE w.petId = :petId")
-    long countByPetId(@Param("petId") Long petId);
+    long countByPetId(@Param("petId") UUID petId);
 }
