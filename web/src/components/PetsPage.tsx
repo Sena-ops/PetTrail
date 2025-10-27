@@ -62,7 +62,7 @@ export const PetsPage = () => {
     }
   }
 
-  const handleDeletePet = async (petId: number) => {
+  const handleDeletePet = async (petId: string) => {
     if (!confirm('Are you sure you want to delete this pet?')) return
 
     try {

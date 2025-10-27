@@ -1,7 +1,7 @@
 import { http } from './http'
 
 export interface Pet {
-  id: number
+  id: string
   name: string
   species: 'CACHORRO' | 'GATO'
   age: number
@@ -28,7 +28,7 @@ export const petsApi = {
     http.get<Pet[]>('/pets'),
     
   // Get pet by ID
-  getPet: (id: number): Promise<Pet> => 
+  getPet: (id: string): Promise<Pet> => 
     http.get<Pet>(`/pets/${id}`),
     
   // Create new pet
@@ -36,10 +36,10 @@ export const petsApi = {
     http.post<Pet>('/pets', data),
     
   // Update pet
-  updatePet: (id: number, data: UpdatePetRequest): Promise<Pet> => 
+  updatePet: (id: string, data: UpdatePetRequest): Promise<Pet> => 
     http.put<Pet>(`/pets/${id}`, data),
     
   // Delete pet
-  deletePet: (id: number): Promise<void> => 
+  deletePet: (id: string): Promise<void> => 
     http.delete<void>(`/pets/${id}`)
 }

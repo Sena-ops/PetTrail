@@ -25,4 +25,12 @@ public interface PetRepository extends JpaRepository<Pet, UUID> {
      * @return Optional containing the pet if found and belongs to user
      */
     Optional<Pet> findByIdAndUserId(UUID id, UUID userId);
+    
+    /**
+     * Check if a pet exists with the given ID and belongs to the given user
+     * @param id the pet ID
+     * @param userId the user ID
+     * @return true if pet exists and belongs to user, false otherwise
+     */
+    boolean existsByIdAndUserId(UUID id, UUID userId);
 }
