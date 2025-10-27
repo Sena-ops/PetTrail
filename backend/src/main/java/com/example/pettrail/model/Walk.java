@@ -22,6 +22,11 @@ public class Walk {
     @Schema(description = "ID of the pet", example = "550e8400-e29b-41d4-a716-446655440000", required = true)
     private UUID petId;
 
+    @NotNull(message = "User ID is required")
+    @Column(name = "user_id", nullable = false)
+    @Schema(description = "ID of the user", example = "550e8400-e29b-41d4-a716-446655440000", required = true)
+    private UUID userId;
+
     @NotNull(message = "Start time is required")
     @Column(name = "started_at", nullable = false)
     @Schema(description = "When the walk started", example = "2025-08-14T22:15:30Z", required = true)
@@ -46,8 +51,9 @@ public class Walk {
     // Constructors
     public Walk() {}
 
-    public Walk(UUID petId, LocalDateTime startedAt) {
+    public Walk(UUID petId, UUID userId, LocalDateTime startedAt) {
         this.petId = petId;
+        this.userId = userId;
         this.startedAt = startedAt;
         this.finishedAt = null;
         this.distanciaM = null;
@@ -55,8 +61,9 @@ public class Walk {
         this.velMediaKmh = null;
     }
 
-    public Walk(UUID petId, LocalDateTime startedAt, LocalDateTime finishedAt) {
+    public Walk(UUID petId, UUID userId, LocalDateTime startedAt, LocalDateTime finishedAt) {
         this.petId = petId;
+        this.userId = userId;
         this.startedAt = startedAt;
         this.finishedAt = finishedAt;
         this.distanciaM = null;
@@ -79,6 +86,14 @@ public class Walk {
 
     public void setPetId(UUID petId) {
         this.petId = petId;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     public LocalDateTime getStartedAt() {

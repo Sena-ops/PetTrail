@@ -11,6 +11,7 @@ import com.example.pettrail.exception.WalkNotFoundException;
 import com.example.pettrail.exception.WalkFinishedException;
 import com.example.pettrail.model.Walk;
 import com.example.pettrail.model.WalkPoint;
+import com.example.pettrail.model.User;
 import com.example.pettrail.repository.PetRepository;
 import com.example.pettrail.repository.WalkRepository;
 import com.example.pettrail.repository.WalkPointRepository;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,8 +64,12 @@ public class WalkService {
      */
     @Transactional
     public StartWalkResponse startWalk(UUID petId) {
-        // Check if pet exists
-        if (!petRepository.existsById(petId)) {
+        // Get current user from security context
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UUID userId = currentUser.getId();
+        
+        // Check if pet exists and belongs to the current user
+        if (!petRepository.existsByIdAndUserId(petId, userId)) {
             throw new PetNotFoundException("Pet not found with ID: " + petId);
         }
 
@@ -74,7 +80,7 @@ public class WalkService {
 
         // Create new walk with server time
         LocalDateTime now = LocalDateTime.now();
-        Walk walk = new Walk(petId, now);
+        Walk walk = new Walk(petId, userId, now);
         Walk savedWalk = walkRepository.save(walk);
 
         // Return response with walk ID and ISO-8601 formatted start time
@@ -225,8 +231,12 @@ public class WalkService {
      */
     @Transactional(readOnly = true)
     public WalksPageResponse listByPet(UUID petId, int page, int size) {
-        // Check if pet exists
-        if (!petRepository.existsById(petId)) {
+        // Get current user from security context
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UUID userId = currentUser.getId();
+        
+        // Check if pet exists and belongs to the current user
+        if (!petRepository.existsByIdAndUserId(petId, userId)) {
             throw new PetNotFoundException("Pet not found with ID: " + petId);
         }
 
@@ -291,8 +301,12 @@ public class WalkService {
      * @throws PetNotFoundException if pet doesn't exist
      */
     public StartWalkResponse getActiveWalk(UUID petId) {
-        // Check if pet exists
-        if (!petRepository.existsById(petId)) {
+        // Get current user from security context
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UUID userId = currentUser.getId();
+        
+        // Check if pet exists and belongs to the current user
+        if (!petRepository.existsByIdAndUserId(petId, userId)) {
             throw new PetNotFoundException("Pet not found with ID: " + petId);
         }
 

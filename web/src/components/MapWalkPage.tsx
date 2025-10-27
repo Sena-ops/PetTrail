@@ -15,7 +15,7 @@ export const MapWalkPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const mapRef = useRef<L.Map | null>(null)
 
-  const handleWalkStart = (walkId: number) => {
+  const handleWalkStart = (walkId: string) => {
     setRoutePoints([])
     setCurrentPosition(null)
     setWalkResult(null)

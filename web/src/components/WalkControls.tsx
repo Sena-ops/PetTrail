@@ -6,7 +6,7 @@ import { idbQueue } from '../lib/idbQueue'
 import { HttpError } from '../api/http'
 
 interface WalkControlsProps {
-  onWalkStart?: (walkId: number) => void
+  onWalkStart?: (walkId: string) => void
   onWalkStop?: (result: any) => void
   onPointReceived?: (point: GeoPoint) => void
   onStatusChange?: (status: string) => void
@@ -21,9 +21,9 @@ export const WalkControls = ({
   onError 
 }: WalkControlsProps) => {
   const [pets, setPets] = useState<Pet[]>([])
-  const [selectedPetId, setSelectedPetId] = useState<number | null>(null)
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null)
   const [isRecording, setIsRecording] = useState(false)
-  const [walkId, setWalkId] = useState<number | null>(null)
+  const [walkId, setWalkId] = useState<string | null>(null)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [recordingTime, setRecordingTime] = useState(0)
   const [pointsCount, setPointsCount] = useState(0)
@@ -327,7 +327,7 @@ export const WalkControls = ({
           <select
             class="form-select"
             value={selectedPetId || ''}
-            onChange={(e) => setSelectedPetId(parseInt((e.target as HTMLSelectElement).value) || null)}
+            onChange={(e) => setSelectedPetId((e.target as HTMLSelectElement).value || null)}
             disabled={isRecording}
           >
             {pets.map(pet => (

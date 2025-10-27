@@ -6,7 +6,7 @@ import { useRouter } from '../router'
 
 export const WalksPage = () => {
   const [pets, setPets] = useState<Pet[]>([])
-  const [selectedPetId, setSelectedPetId] = useState<number | null>(null)
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null)
   const [walks, setWalks] = useState<WalkListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -41,7 +41,7 @@ export const WalksPage = () => {
     }
   }
 
-  const loadWalks = async (petId: number, page: number) => {
+  const loadWalks = async (petId: string, page: number) => {
     try {
       setLoading(true)
       setError(null)
@@ -56,7 +56,7 @@ export const WalksPage = () => {
     }
   }
 
-  const handlePetChange = (petId: number) => {
+  const handlePetChange = (petId: string) => {
     setSelectedPetId(petId)
     setCurrentPage(0)
   }
@@ -65,7 +65,7 @@ export const WalksPage = () => {
     setCurrentPage(page)
   }
 
-  const handleViewWalkDetails = (walkId: number) => {
+  const handleViewWalkDetails = (walkId: string) => {
     navigate('walk-details', { id: walkId.toString() })
   }
 
@@ -137,7 +137,7 @@ export const WalksPage = () => {
               <select
                 class="form-select"
                 value={selectedPetId || ''}
-                onChange={(e) => handlePetChange(parseInt((e.target as HTMLSelectElement).value))}
+                onChange={(e) => handlePetChange((e.target as HTMLSelectElement).value)}
               >
                 {pets.map(pet => (
                   <option key={pet.id} value={pet.id}>
