@@ -140,12 +140,12 @@ export const AchievementsPage = () => {
                                   <span>Progress</span>
                                   <span>{achievement.progress} / {achievement.target}</span>
                                 </div>
-                                <div style="width: 100%; height: 4px; background-color: #e0e0e0; border-radius: 2px; overflow: hidden;">
+                                <div class="progress-bar-container">
                                   <div 
+                                    class={`progress-bar-fill ${achievement.earnedAt ? 'progress-bar-earned' : 'progress-bar-default'}`}
                                     style={{
                                       width: `${Math.min((achievement.progress / achievement.target) * 100, 100)}%`,
                                       height: '100%',
-                                      backgroundColor: achievement.earnedAt ? '#ff9800' : '#4CAF50',
                                       transition: 'width 0.3s ease'
                                     }}
                                   ></div>

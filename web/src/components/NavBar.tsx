@@ -1,9 +1,11 @@
 import { useRouter } from '../router'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 
 export const NavBar = () => {
   const { currentRoute, navigate } = useRouter()
   const { user, logout } = useAuth()
+  const { isDarkMode, toggleDarkMode } = useTheme()
 
   const handleLogout = () => {
     logout()
@@ -46,6 +48,13 @@ export const NavBar = () => {
         </div>
         <div class="nav-user">
           <span class="nav-user-name">{user?.fullName}</span>
+          <button 
+            onClick={toggleDarkMode}
+            class="nav-theme-toggle"
+            title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
           <button 
             onClick={handleLogout}
             class="nav-logout"

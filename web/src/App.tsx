@@ -8,6 +8,7 @@ import { WalksPage } from './components/WalksPage'
 import { LoginPage } from './components/LoginPage'
 import { RegisterPage } from './components/RegisterPage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { useState } from 'preact/hooks'
 
 const AppContent = () => {
@@ -73,10 +74,12 @@ const AppContent = () => {
 
 export const App = () => {
   return (
-    <AuthProvider>
-      <RouterProvider>
-        <AppContent />
-      </RouterProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <RouterProvider>
+          <AppContent />
+        </RouterProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
