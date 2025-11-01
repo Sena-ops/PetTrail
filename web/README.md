@@ -1,4 +1,4 @@
-# PatTrail Frontend
+# PetTrail Frontend
 
 A modern Progressive Web App (PWA) for tracking pet walks with gamification features, built with Vite, Preact, and TypeScript.
 
@@ -190,4 +190,4 @@ For production, ensure your backend is accessible at the correct URL and update 
 
 ## License
 
-This project is licensed under the same license as the main PatTrail project.
+This project is licensed under the same license as the main PetTrail project.

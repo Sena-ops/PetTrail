@@ -1,4 +1,4 @@
-# OpenAPI/Swagger Documentation - PatTrail
+# OpenAPI/Swagger Documentation - PetTrail
 
 ## ✅ Critérios de Aceite Implementados
 

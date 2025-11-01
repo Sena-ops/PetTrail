@@ -13,7 +13,7 @@ public class PettrailApplication {
         try {
             Files.createDirectories(Path.of("data")); // garante ./data antes do Flyway/DataSource
         } catch (Exception e) {
-            System.err.println("[PatTrail] Falha ao criar pasta data/: " + e.getMessage());
+            System.err.println("[PetTrail] Falha ao criar pasta data/: " + e.getMessage());
         }
         SpringApplication.run(PettrailApplication.class, args);
     }
