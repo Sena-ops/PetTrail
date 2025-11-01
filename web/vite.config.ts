@@ -37,8 +37,8 @@ export default defineConfig({
         ]
       },
       manifest: {
-        name: 'PatTrail',
-        short_name: 'PatTrail',
+        name: 'PetTrail',
+        short_name: 'PetTrail',
         description: 'Pet walk tracker with gamification',
         theme_color: '#ff7a00',
         background_color: '#ffffff',
