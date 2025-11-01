@@ -5,7 +5,7 @@ import { HttpError } from '../api/http'
 
 export const AchievementsPage = () => {
   const [pets, setPets] = useState<Pet[]>([])
-  const [selectedPetId, setSelectedPetId] = useState<number | null>(null)
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null)
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +38,7 @@ export const AchievementsPage = () => {
     }
   }
 
-  const loadAchievements = async (petId: number) => {
+  const loadAchievements = async (petId: string) => {
     try {
       setError(null)
       const achievementsList = await achievementsApi.listAchievements(petId)
@@ -86,7 +86,7 @@ export const AchievementsPage = () => {
               <select
                 class="form-select"
                 value={selectedPetId || ''}
-                onChange={(e) => setSelectedPetId(parseInt((e.target as HTMLSelectElement).value) || null)}
+                onChange={(e) => setSelectedPetId((e.target as HTMLSelectElement).value || null)}
               >
                 {pets.map(pet => (
                   <option key={pet.id} value={pet.id}>
