@@ -31,6 +31,9 @@ public class CriarPetRequest {
     @Schema(description = "Race/breed of the pet", example = "Golden Retriever", required = true, maxLength = 50)
     private String race;
 
+    @Schema(description = "URL or base64 data URL of the pet picture", example = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...", maxLength = 1000000)
+    private String pictureUrl;
+
     // Constructors
     public CriarPetRequest() {}
 
@@ -72,5 +75,13 @@ public class CriarPetRequest {
 
     public void setRace(String race) {
         this.race = race;
+    }
+
+    public String getPictureUrl() {
+        return pictureUrl;
+    }
+
+    public void setPictureUrl(String pictureUrl) {
+        this.pictureUrl = pictureUrl;
     }
 }

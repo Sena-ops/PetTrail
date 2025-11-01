@@ -6,6 +6,7 @@ export interface Pet {
   species: 'CACHORRO' | 'GATO'
   age: number
   race: string
+  pictureUrl?: string
 }
 
 export interface CreatePetRequest {
@@ -13,6 +14,7 @@ export interface CreatePetRequest {
   species: 'CACHORRO' | 'GATO'
   age: number
   race: string
+  pictureUrl?: string
 }
 
 export interface UpdatePetRequest {
@@ -20,6 +22,7 @@ export interface UpdatePetRequest {
   species?: 'CACHORRO' | 'GATO'
   age?: number
   race?: string
+  pictureUrl?: string
 }
 
 export const petsApi = {

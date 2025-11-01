@@ -207,7 +207,12 @@ public class PetController {
     ) {
         String token = extractTokenFromRequest(httpRequest);
         User currentUser = authService.getCurrentUser(token);
-        Pet pet = new Pet(request.getName(), request.getSpecies(), request.getAge(), request.getRace());
+        // Handle empty string pictureUrl as null
+        String pictureUrl = request.getPictureUrl();
+        if (pictureUrl != null && pictureUrl.trim().isEmpty()) {
+            pictureUrl = null;
+        }
+        Pet pet = new Pet(request.getName(), request.getSpecies(), request.getAge(), request.getRace(), pictureUrl);
         pet.setUser(currentUser);
         Pet savedPet = petRepository.save(pet);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedPet);
@@ -310,6 +315,10 @@ public class PetController {
             }
             if (request.getRace() != null) {
                 pet.setRace(request.getRace());
+            }
+            // Allow setting pictureUrl to null/empty to remove picture
+            if (request.getPictureUrl() != null) {
+                pet.setPictureUrl(request.getPictureUrl().trim().isEmpty() ? null : request.getPictureUrl());
             }
             
             Pet updatedPet = petRepository.save(pet);

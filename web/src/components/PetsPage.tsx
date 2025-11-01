@@ -14,7 +14,8 @@ export const PetsPage = () => {
     name: '',
     species: 'CACHORRO',
     age: 0,
-    race: ''
+    race: '',
+    pictureUrl: ''
   })
 
   useEffect(() => {
@@ -38,11 +39,13 @@ export const PetsPage = () => {
     e.preventDefault()
     try {
       setError(null)
+      console.log('Sending pet data:', formData) // Debug log
       const newPet = await petsApi.createPet(formData)
       setPets([...pets, newPet])
-      setFormData({ name: '', species: 'CACHORRO', age: 0, race: '' })
+      setFormData({ name: '', species: 'CACHORRO', age: 0, race: '', pictureUrl: '' })
       setShowCreateForm(false)
     } catch (err) {
+      console.error('Error creating pet:', err) // Debug log
       setError(err instanceof HttpError ? err.message : 'Failed to create pet')
     }
   }
@@ -53,11 +56,13 @@ export const PetsPage = () => {
 
     try {
       setError(null)
+      console.log('Updating pet data:', formData) // Debug log
       const updatedPet = await petsApi.updatePet(editingPet.id, formData)
       setPets(pets.map(pet => pet.id === editingPet.id ? updatedPet : pet))
       setEditingPet(null)
-      setFormData({ name: '', species: 'CACHORRO', age: 0, race: '' })
+      setFormData({ name: '', species: 'CACHORRO', age: 0, race: '', pictureUrl: '' })
     } catch (err) {
+      console.error('Error updating pet:', err) // Debug log
       setError(err instanceof HttpError ? err.message : 'Failed to update pet')
     }
   }
@@ -80,13 +85,14 @@ export const PetsPage = () => {
       name: pet.name,
       species: pet.species,
       age: pet.age,
-      race: pet.race
+      race: pet.race,
+      pictureUrl: pet.pictureUrl || ''
     })
   }
 
   const cancelEdit = () => {
     setEditingPet(null)
-    setFormData({ name: '', species: 'CACHORRO', age: 0, race: '' })
+    setFormData({ name: '', species: 'CACHORRO', age: 0, race: '', pictureUrl: '' })
   }
 
   if (loading) {
@@ -176,6 +182,44 @@ export const PetsPage = () => {
               />
             </div>
 
+            <div class="form-group">
+              <label class="form-label">Pet Picture</label>
+              <input
+                type="file"
+                class="form-input"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = (e.target as HTMLInputElement).files?.[0]
+                  if (file) {
+                    // Check file size (limit to 1MB)
+                    if (file.size > 1024 * 1024) {
+                      setError('Image size must be less than 1MB')
+                      return
+                    }
+                    
+                    const reader = new FileReader()
+                    reader.onload = (event) => {
+                      const result = event.target?.result as string
+                      setFormData({ ...formData, pictureUrl: result })
+                    }
+                    reader.readAsDataURL(file)
+                  }
+                }}
+              />
+              <div style="font-size: 0.8em; color: #666; margin-top: var(--spacing-xs);">
+                Maximum file size: 1MB. Supported formats: JPG, PNG, GIF
+              </div>
+              {formData.pictureUrl && (
+                <div style="margin-top: var(--spacing-sm);">
+                  <img 
+                    src={formData.pictureUrl} 
+                    alt="Pet preview" 
+                    style="max-width: 150px; max-height: 150px; border-radius: var(--border-radius); object-fit: cover;"
+                  />
+                </div>
+              )}
+            </div>
+
             <div style="display: flex; gap: var(--spacing-md);">
               <button type="submit" class="btn">
                 {editingPet ? 'Update Pet' : 'Create Pet'}
@@ -204,7 +248,18 @@ export const PetsPage = () => {
             <div key={pet.id} class="pet-item">
               <div class="pet-info">
                 <div class="pet-name">
-                  {pet.name} {pet.species === 'CACHORRO' ? '🐕' : '🐱'}
+                  {pet.pictureUrl ? (
+                    <img 
+                      src={pet.pictureUrl} 
+                      alt={`${pet.name} picture`}
+                      style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: var(--spacing-sm); vertical-align: middle;"
+                    />
+                  ) : (
+                    <span style="margin-right: var(--spacing-sm); font-size: 24px;">
+                      {pet.species === 'CACHORRO' ? '🐕' : '🐱'}
+                    </span>
+                  )}
+                  {pet.name}
                 </div>
                 <div class="pet-details">
                   {pet.race} • {pet.age} year{pet.age !== 1 ? 's' : ''} old

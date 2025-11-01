@@ -46,10 +46,10 @@ class WalkPointsServiceTest {
 
     @BeforeEach
     void setUp() {
-        activeWalk = new Walk(TEST_WALK_ID, LocalDateTime.now());
+        activeWalk = new Walk(TEST_WALK_ID, null, LocalDateTime.now());
         activeWalk.setId(TEST_WALK_ID);
 
-        finishedWalk = new Walk(TEST_WALK_ID_2, LocalDateTime.now().minusHours(1));
+        finishedWalk = new Walk(TEST_WALK_ID_2, null, LocalDateTime.now().minusHours(1));
         finishedWalk.setId(TEST_WALK_ID_2);
         finishedWalk.setFinishedAt(LocalDateTime.now());
     }
