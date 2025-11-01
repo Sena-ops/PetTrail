@@ -1,4 +1,4 @@
-# PatTrail Backend
+# PetTrail Backend
 
 A Spring Boot application for pet walk tracking with GPS coordinates.
 

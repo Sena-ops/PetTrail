@@ -1,4 +1,4 @@
-# PatTrail Frontend Implementation Summary
+# PetTrail Frontend Implementation Summary
 
 ## ✅ Completed Implementation
 

@@ -23,7 +23,7 @@ public class HealthController {
     @GetMapping("/info")
     public ResponseEntity<Map<String, Object>> info() {
         Map<String, Object> info = new HashMap<>();
-        info.put("name", "PatTrail API");
+        info.put("name", "PetTrail API");
         info.put("version", "1.0.0");
         info.put("description", "API para rastrear passeios do seu pet e conquistar badges");
         return ResponseEntity.ok(info);
