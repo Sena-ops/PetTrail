@@ -3,7 +3,7 @@ import { WalkPointsBatchRequest } from '../api/walks'
 
 interface QueueItem {
   id: string
-  walkId: number
+  walkId: string
   batch: WalkPointsBatchRequest
   timestamp: number
   retryCount: number
@@ -13,7 +13,7 @@ interface PetTrailDB extends DBSchema {
   walkQueue: {
     key: string
     value: QueueItem
-    indexes: { 'by-walkId': number }
+    indexes: { 'by-walkId': string }
   }
 }
 
@@ -33,7 +33,7 @@ class IDBQueue {
     })
   }
 
-  async enqueue(walkId: number, batch: WalkPointsBatchRequest): Promise<void> {
+  async enqueue(walkId: string, batch: WalkPointsBatchRequest): Promise<void> {
     await this.init()
     
     const item: QueueItem = {
@@ -47,7 +47,7 @@ class IDBQueue {
     await this.db!.add('walkQueue', item)
   }
 
-  async getQueuedBatches(walkId: number): Promise<QueueItem[]> {
+  async getQueuedBatches(walkId: string): Promise<QueueItem[]> {
     await this.init()
     
     const tx = this.db!.transaction('walkQueue', 'readonly')
@@ -72,7 +72,7 @@ class IDBQueue {
     }
   }
 
-  async getStats(walkId: number): Promise<{ count: number; oldestTimestamp: number | null }> {
+  async getStats(walkId: string): Promise<{ count: number; oldestTimestamp: number | null }> {
     await this.init()
     
     const batches = await this.getQueuedBatches(walkId)
@@ -86,7 +86,7 @@ class IDBQueue {
     }
   }
 
-  async drain(walkId: number, sender: (batch: WalkPointsBatchRequest) => Promise<boolean>): Promise<{
+  async drain(walkId: string, sender: (batch: WalkPointsBatchRequest) => Promise<boolean>): Promise<{
     sent: number
     failed: number
     remaining: number
@@ -120,7 +120,7 @@ class IDBQueue {
     return { sent, failed, remaining }
   }
 
-  async clearWalk(walkId: number): Promise<void> {
+  async clearWalk(walkId: string): Promise<void> {
     await this.init()
     
     const batches = await this.getQueuedBatches(walkId)

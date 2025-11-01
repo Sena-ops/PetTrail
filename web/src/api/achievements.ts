@@ -12,6 +12,6 @@ export interface Achievement {
 
 export const achievementsApi = {
   // List achievements for a pet
-  listAchievements: (petId: number): Promise<Achievement[]> => 
+  listAchievements: (petId: string): Promise<Achievement[]> => 
     http.get<Achievement[]>(`/achievements?petId=${petId}`)
 }
