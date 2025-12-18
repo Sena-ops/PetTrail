@@ -13,33 +13,33 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: read #This is required for actions/checkout
-
+      contents: read
+    
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Set up Java version
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'microsoft'
-
+      
       - name: Build with Maven
-        run: mvn clean install
-
+        run: mvn clean install -f backend/pom.xml  # ← MUDANÇA AQUI
+      
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/backend/target/*.jar'
+          path: 'backend/target/*.jar'  # ← SIMPLIFICADO
 
   deploy:
     runs-on: windows-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
+      id-token: write
+      contents: read
+    
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -52,7 +52,7 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_B0F17009C7D340E28509D91752F223AF }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_65E7B330EBFF453E847B17D32725479F }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D82896A50C384173973236719DC66CC2 }}
-
+      
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -60,5 +60,3 @@ jobs:
           app-name: 'pettrail'
           slot-name: 'Production'
           package: '*.jar'
-
-          
