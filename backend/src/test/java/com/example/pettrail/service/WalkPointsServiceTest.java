@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
@@ -31,6 +30,7 @@ class WalkPointsServiceTest {
 
     private static final UUID TEST_WALK_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
     private static final UUID TEST_WALK_ID_2 = UUID.fromString("550e8400-e29b-41d4-a716-446655440002");
+    private static final UUID NON_EXISTENT_WALK_ID = UUID.fromString("550e8400-e29b-41d4-a716-446655440999");
 
     @Mock
     private WalkRepository walkRepository;
@@ -65,11 +65,11 @@ class WalkPointsServiceTest {
                         LocalDateTime.parse("2025-08-14T22:00:10"))
         );
 
-        when(walkRepository.findById(UUID.fromString(walkId.toString()))).thenReturn(Optional.of(activeWalk));
+        when(walkRepository.findById(walkId)).thenReturn(Optional.of(activeWalk));
         when(walkPointRepository.saveAll(anyList())).thenReturn(Arrays.asList());
 
         // When
-        WalkPointsBatchResponse response = walkPointsService.ingestPoints(UUID.fromString("101"), points);
+        WalkPointsBatchResponse response = walkPointsService.ingestPoints(walkId, points);
 
         // Then
         assertNotNull(response);
@@ -77,47 +77,47 @@ class WalkPointsServiceTest {
         assertEquals(2, response.getAccepted());
         assertEquals(0, response.getDiscarded());
 
-        verify(walkRepository).findById(UUID.fromString(walkId.toString()));
+        verify(walkRepository).findById(walkId);
         verify(walkPointRepository).saveAll(anyList());
     }
 
     @Test
     void testIngestPoints_WalkNotFound() {
         // Given
-        Long walkId = 999L;
+        UUID walkId = NON_EXISTENT_WALK_ID;
         List<WalkPointRequest> points = Arrays.asList(
                 new WalkPointRequest(new BigDecimal("-23.5505"), new BigDecimal("-46.6333"), 
                         LocalDateTime.parse("2025-08-14T22:00:00"))
         );
 
-        when(walkRepository.findById(UUID.fromString(walkId.toString()))).thenReturn(Optional.empty());
+        when(walkRepository.findById(walkId)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(WalkNotFoundException.class, () -> {
-            walkPointsService.ingestPoints(UUID.fromString("101"), points);
+            walkPointsService.ingestPoints(walkId, points);
         });
 
-        verify(walkRepository).findById(UUID.fromString(walkId.toString()));
+        verify(walkRepository).findById(walkId);
         verify(walkPointRepository, never()).saveAll(anyList());
     }
 
     @Test
     void testIngestPoints_WalkFinished() {
         // Given
-        Long walkId = 456L;
+        UUID walkId = TEST_WALK_ID_2;
         List<WalkPointRequest> points = Arrays.asList(
                 new WalkPointRequest(new BigDecimal("-23.5505"), new BigDecimal("-46.6333"), 
                         LocalDateTime.parse("2025-08-14T22:00:00"))
         );
 
-        when(walkRepository.findById(UUID.fromString(walkId.toString()))).thenReturn(Optional.of(finishedWalk));
+        when(walkRepository.findById(walkId)).thenReturn(Optional.of(finishedWalk));
 
         // When & Then
         assertThrows(WalkFinishedException.class, () -> {
-            walkPointsService.ingestPoints(UUID.fromString("101"), points);
+            walkPointsService.ingestPoints(walkId, points);
         });
 
-        verify(walkRepository).findById(UUID.fromString(walkId.toString()));
+        verify(walkRepository).findById(walkId);
         verify(walkPointRepository, never()).saveAll(anyList());
     }
 
@@ -132,11 +132,11 @@ class WalkPointsServiceTest {
                         LocalDateTime.parse("2025-08-14T22:00:01")) // Very far in 1 second
         );
 
-        when(walkRepository.findById(UUID.fromString(walkId.toString()))).thenReturn(Optional.of(activeWalk));
+        when(walkRepository.findById(walkId)).thenReturn(Optional.of(activeWalk));
         when(walkPointRepository.saveAll(anyList())).thenReturn(Arrays.asList());
 
         // When
-        WalkPointsBatchResponse response = walkPointsService.ingestPoints(UUID.fromString("101"), points);
+        WalkPointsBatchResponse response = walkPointsService.ingestPoints(walkId, points);
 
         // Then
         assertNotNull(response);
@@ -144,7 +144,7 @@ class WalkPointsServiceTest {
         assertEquals(1, response.getAccepted()); // First point accepted
         assertEquals(1, response.getDiscarded()); // Second point discarded as outlier
 
-        verify(walkRepository).findById(UUID.fromString(walkId.toString()));
+        verify(walkRepository).findById(walkId);
         verify(walkPointRepository).saveAll(anyList());
     }
 
@@ -159,11 +159,11 @@ class WalkPointsServiceTest {
                         LocalDateTime.parse("2025-08-14T22:00:00")) // Same timestamp
         );
 
-        when(walkRepository.findById(UUID.fromString(walkId.toString()))).thenReturn(Optional.of(activeWalk));
+        when(walkRepository.findById(walkId)).thenReturn(Optional.of(activeWalk));
         when(walkPointRepository.saveAll(anyList())).thenReturn(Arrays.asList());
 
         // When
-        WalkPointsBatchResponse response = walkPointsService.ingestPoints(UUID.fromString("101"), points);
+        WalkPointsBatchResponse response = walkPointsService.ingestPoints(walkId, points);
 
         // Then
         assertNotNull(response);
@@ -171,7 +171,7 @@ class WalkPointsServiceTest {
         assertEquals(1, response.getAccepted()); // First point accepted
         assertEquals(1, response.getDiscarded()); // Second point discarded due to non-increasing timestamp
 
-        verify(walkRepository).findById(UUID.fromString(walkId.toString()));
+        verify(walkRepository).findById(walkId);
         verify(walkPointRepository).saveAll(anyList());
     }
 }
