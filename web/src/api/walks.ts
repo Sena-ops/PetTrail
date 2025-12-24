@@ -81,13 +81,6 @@ export const walksApi = {
     http.get<WalkListItem>(`/walks/${walkId}`),
 
   // Get walk GeoJSON
-  fetchWalkGeoJSON: async (id: string): Promise<GeoFeature> => {
-    const res = await fetch(`/api/walks/${id}/geojson`, { headers: { Accept: 'application/json' } })
-    if (!res.ok) {
-      let msg = `Erro ao carregar rota (HTTP ${res.status})`
-      try { const err = await res.json(); msg = err?.message || msg; } catch {}
-      throw new Error(msg)
-    }
-    return res.json()
-  }
+  fetchWalkGeoJSON: (id: string): Promise<GeoFeature> => 
+    http.get<GeoFeature>(`/walks/${id}/geojson`)
 }
